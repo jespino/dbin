@@ -2,6 +2,7 @@ package main
 
 import (
 	"dbin/cmd/cassandra"
+	"dbin/cmd/list"
 	"dbin/cmd/mongo"
 	"dbin/cmd/neo4j"
 	"dbin/cmd/postgres"
@@ -21,6 +22,7 @@ func main() {
 	}
 
 	cmd.AddCommand(
+		list.NewCommand(),
 		postgres.NewCommand(),
 		mongo.NewCommand(),
 		cassandra.NewCommand(),
