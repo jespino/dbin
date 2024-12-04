@@ -18,6 +18,7 @@ func NewCommand() *cobra.Command {
 			fmt.Println("- Cassandra (cassandra)")
 			fmt.Println("- Redis (redis)")
 			fmt.Println("- Neo4j (neo4j)")
+			fmt.Println("- MariaDB (mariadb)")
 			return nil
 		},
 	}
