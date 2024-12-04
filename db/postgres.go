@@ -9,17 +9,17 @@ import (
 	"time"
 
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
-	"github.com/docker/docker/api/types"
 	"github.com/docker/go-connections/nat"
 	_ "github.com/lib/pq"
 )
 
 type PostgresManager struct {
-	dataDir          string
-	port             int
-	dockerCli        *client.Client
-	dbContainerId    string
+	dataDir           string
+	port              int
+	dockerCli         *client.Client
+	dbContainerId     string
 	clientContainerId string
 }
 
@@ -40,7 +40,7 @@ func (pm *PostgresManager) StartDatabase() error {
 	ctx := context.Background()
 
 	// Pull PostgreSQL image
-	_, err := pm.dockerCli.ImagePull(ctx, "postgres:latest", types.ImagePullOptions{})
+	_, err := pm.dockerCli.ImagePull(ctx, "postgres:latest", image.PullOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to pull image: %v", err)
 	}
@@ -91,7 +91,7 @@ func (pm *PostgresManager) StartDatabase() error {
 
 func (pm *PostgresManager) waitForDatabase() error {
 	connStr := fmt.Sprintf("host=localhost port=%d user=postgres password=postgres dbname=postgres sslmode=disable", pm.port)
-	
+
 	for i := 0; i < 30; i++ {
 		db, err := sql.Open("postgres", connStr)
 		if err == nil {
@@ -104,7 +104,7 @@ func (pm *PostgresManager) waitForDatabase() error {
 		}
 		time.Sleep(1 * time.Second)
 	}
-	
+
 	return fmt.Errorf("timeout waiting for database to be ready")
 }
 
@@ -113,13 +113,13 @@ func (pm *PostgresManager) StartClient() error {
 
 	// Create client container
 	containerConfig := &container.Config{
-		Image: "postgres:latest",
-		Cmd:   []string{"psql", "-h", "host.docker.internal", fmt.Sprintf("-p%d", pm.port), "-U", "postgres"},
-		Tty:   true,
-		AttachStdin: true,
+		Image:        "postgres:latest",
+		Cmd:          []string{"psql", "-h", "host.docker.internal", fmt.Sprintf("-p%d", pm.port), "-U", "postgres"},
+		Tty:          true,
+		AttachStdin:  true,
 		AttachStdout: true,
 		AttachStderr: true,
-		OpenStdin: true,
+		OpenStdin:    true,
 		Env: []string{
 			"PGPASSWORD=postgres",
 		},
@@ -179,7 +179,7 @@ func (pm *PostgresManager) StartClient() error {
 
 func (pm *PostgresManager) Cleanup() error {
 	ctx := context.Background()
-	
+
 	// Remove client container if it exists
 	if pm.clientContainerId != "" {
 		if err := pm.dockerCli.ContainerRemove(ctx, pm.clientContainerId, container.RemoveOptions{
