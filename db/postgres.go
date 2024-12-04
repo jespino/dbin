@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
-	"syscall"
+	"os/exec"
 	"time"
 
 	"github.com/docker/docker/api/types/container"
@@ -125,16 +125,11 @@ func (pm *PostgresManager) waitForDatabase() error {
 }
 
 func (pm *PostgresManager) StartClient() error {
-	args := []string{
-		"docker", "exec",
-		"-it",
-		pm.dbContainerId,
-		"psql",
-		"-U", "postgres",
-	}
-
-	// Replace current process with psql
-	return syscall.Exec("/usr/bin/docker", args, os.Environ())
+	cmd := exec.Command("docker", "exec", "-it", pm.dbContainerId, "psql", "-U", "postgres")
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd.Run()
 }
 
 func (pm *PostgresManager) Cleanup() error {
