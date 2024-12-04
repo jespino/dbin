@@ -23,7 +23,10 @@ type PostgresManager struct {
 }
 
 func NewPostgresManager(dataDir string) *PostgresManager {
-	cli, err := client.NewClientWithOpts(client.FromEnv)
+	cli, err := client.NewClientWithOpts(
+		client.FromEnv,
+		client.WithVersion("1.46"),
+	)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to create Docker client: %v", err))
 	}
