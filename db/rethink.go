@@ -41,7 +41,7 @@ func (rm *RethinkManager) StartDatabase() error {
 
 func (rm *RethinkManager) StartClient() error {
 	for i := 0; i < 5; i++ {
-		cmd := exec.Command("docker", "exec", "-it", rm.dbContainerId, "rethinkdb", "--connect", "localhost:28015")
+		cmd := exec.Command("docker", "exec", "-it", rm.dbContainerId, "rethinkdb", "connect", "localhost:28015")
 		cmd.Stdin = os.Stdin
 		cmd.Stdout = os.Stdout
 		cmd.Stderr = os.Stderr
