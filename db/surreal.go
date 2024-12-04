@@ -7,9 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"time"
-
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/go-connections/nat"
 )
 
 type SurrealManager struct {
