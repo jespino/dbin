@@ -51,7 +51,7 @@ func (pm *PostgresManager) StartDatabase() error {
 	}
 
 	// Pull PostgreSQL image
-	_, err := pm.dockerCli.ImagePull(ctx, "postgres:latest", image.PullOptions{})
+	_, err = pm.dockerCli.ImagePull(ctx, "postgres:latest", image.PullOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to pull image: %v", err)
 	}
@@ -222,8 +222,6 @@ func (pm *PostgresManager) Cleanup() error {
 			}
 		}
 	}
-	ctx := context.Background()
-
 	// Remove client container if it exists
 	if pm.clientContainerId != "" {
 		if err := pm.dockerCli.ContainerRemove(ctx, pm.clientContainerId, container.RemoveOptions{
