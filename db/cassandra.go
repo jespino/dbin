@@ -16,93 +16,30 @@ import (
 )
 
 type CassandraManager struct {
-	dataDir       string
-	dockerCli     *client.Client
-	dbContainerId string
-	dbPort        string
+	*BaseManager
 }
 
 func NewCassandraManager(dataDir string) *CassandraManager {
-	cli, err := client.NewClientWithOpts(
-		client.FromEnv,
-		client.WithVersion("1.46"),
-	)
+	base, err := NewBaseManager(dataDir)
 	if err != nil {
-		panic(fmt.Sprintf("Failed to create Docker client: %v", err))
+		panic(fmt.Sprintf("Failed to create base manager: %v", err))
 	}
 
 	return &CassandraManager{
-		dataDir:   dataDir,
-		dockerCli: cli,
+		BaseManager: base,
 	}
 }
 
 func (cm *CassandraManager) StartDatabase() error {
 	ctx := context.Background()
 
-	_, _, err := cm.dockerCli.ImageInspectWithRaw(ctx, "cassandra:latest")
-	if err != nil {
-		log.Println("Cassandra image not found locally, pulling...")
-		reader, err := cm.dockerCli.ImagePull(ctx, "cassandra:latest", image.PullOptions{})
-		if err != nil {
-			return fmt.Errorf("failed to pull image: %v", err)
-		}
-		defer reader.Close()
-		
-		// Wait for the pull to complete
-		_, err = io.Copy(os.Stdout, reader)
-		if err != nil {
-			return fmt.Errorf("error while pulling image: %v", err)
-		}
-	} else {
-		log.Println("Using existing Cassandra image")
+	if err := cm.PullImageIfNeeded(ctx, "cassandra:latest"); err != nil {
+		return err
 	}
 
-	log.Println("Creating container...")
-	containerConfig := &container.Config{
-		Image: "cassandra:latest",
-		ExposedPorts: nat.PortSet{
-			"9042/tcp": struct{}{},
-		},
+	if err := cm.CreateContainer(ctx, "cassandra:latest", "cassandra-db", "9042/tcp", nil, "/var/lib/cassandra"); err != nil {
+		return err
 	}
-
-	hostConfig := &container.HostConfig{
-		PortBindings: nat.PortMap{
-			"9042/tcp": []nat.PortBinding{
-				{
-					HostIP:   "0.0.0.0",
-					HostPort: "0", // Let Docker assign a random port
-				},
-			},
-		},
-	}
-
-	if cm.dataDir != "" {
-		hostConfig.Binds = []string{
-			fmt.Sprintf("%s:/var/lib/cassandra", cm.dataDir),
-		}
-	}
-
-	resp, err := cm.dockerCli.ContainerCreate(ctx, containerConfig, hostConfig, nil, nil, "cassandra-db")
-	if err != nil {
-		return fmt.Errorf("failed to create container: %v", err)
-	}
-
-	cm.dbContainerId = resp.ID
-
-	log.Println("Starting container...")
-	if err := cm.dockerCli.ContainerStart(ctx, cm.dbContainerId, container.StartOptions{}); err != nil {
-		return fmt.Errorf("failed to start container: %v", err)
-	}
-	log.Println("Container started successfully")
-
-	log.Println("Getting container port mapping...")
-	inspect, err := cm.dockerCli.ContainerInspect(ctx, cm.dbContainerId)
-	if err != nil {
-		return fmt.Errorf("failed to inspect container: %v", err)
-	}
-
-	cm.dbPort = inspect.NetworkSettings.Ports["9042/tcp"][0].HostPort
 
 	// Wait for Cassandra to be ready
 	log.Println("Waiting for Cassandra to be ready...")
@@ -138,22 +75,5 @@ func (cm *CassandraManager) StartClient() error {
 func (cm *CassandraManager) Cleanup() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-
-	if cm.dbContainerId != "" {
-		log.Printf("Stopping container %s...\n", cm.dbContainerId)
-		if err := cm.dockerCli.ContainerStop(ctx, cm.dbContainerId, container.StopOptions{}); err != nil {
-			return fmt.Errorf("failed to stop database container: %v", err)
-		}
-		log.Println("Container stopped successfully")
-
-		log.Println("Removing container...")
-		if err := cm.dockerCli.ContainerRemove(ctx, cm.dbContainerId, container.RemoveOptions{
-			Force: true,
-		}); err != nil {
-			return fmt.Errorf("failed to remove database container: %v", err)
-		}
-		log.Println("Container removed successfully")
-	}
-
-	return nil
+	return cm.BaseManager.Cleanup(ctx)
 }
