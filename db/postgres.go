@@ -124,7 +124,6 @@ func (pm *PostgresManager) StartClient() error {
 	args := []string{
 		"docker", "exec",
 		"-it",
-		"--rm",
 		pm.dbContainerId,
 		"psql",
 		"-U", "postgres",
