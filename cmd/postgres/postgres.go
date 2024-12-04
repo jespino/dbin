@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"sync"
 	"syscall"
 
 	"github.com/spf13/cobra"
@@ -58,22 +59,36 @@ func run(cmd *cobra.Command, args []string) error {
 		clientDone <- nil
 	}()
 
+	// Create WaitGroup for cleanup coordination
+	var wg sync.WaitGroup
+	wg.Add(1)
+
 	// Wait for either client to finish or interrupt signal
+	var result error
 	select {
 	case err := <-clientDone:
 		if err != nil {
-			return fmt.Errorf("client error: %v", err)
+			result = fmt.Errorf("client error: %v", err)
 		}
 		// Clean up after client exits normally
-		if err := manager.Cleanup(); err != nil {
-			log.Printf("Cleanup error: %v", err)
-		}
-		return nil
+		go func() {
+			defer wg.Done()
+			if err := manager.Cleanup(); err != nil {
+				log.Printf("Cleanup error: %v", err)
+			}
+		}()
 	case <-sigChan:
 		// Stop the database container immediately on interrupt
-		if err := manager.Cleanup(); err != nil {
-			log.Printf("Cleanup error: %v", err)
-		}
-		return fmt.Errorf("interrupted")
+		go func() {
+			defer wg.Done()
+			if err := manager.Cleanup(); err != nil {
+				log.Printf("Cleanup error: %v", err)
+			}
+		}()
+		result = fmt.Errorf("interrupted")
 	}
+
+	// Wait for cleanup to complete
+	wg.Wait()
+	return result
 }

@@ -134,7 +134,8 @@ func (pm *PostgresManager) StartClient() error {
 }
 
 func (pm *PostgresManager) Cleanup() error {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
 
 	// Stop and remove database container
 	if pm.dbContainerId != "" {
