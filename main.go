@@ -1,6 +1,7 @@
 package main
 
 import (
+	"dbin/cmd/mongo"
 	"dbin/cmd/postgres"
 	"log"
 	"os"
@@ -15,7 +16,10 @@ func main() {
 		Long:  `A collection of tools for managing databases in containers`,
 	}
 
-	cmd.AddCommand(postgres.NewCommand())
+	cmd.AddCommand(
+		postgres.NewCommand(),
+		mongo.NewCommand(),
+	)
 
 	if err := cmd.Execute(); err != nil {
 		log.Printf("Error: %v\n", err)
