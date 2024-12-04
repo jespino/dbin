@@ -17,13 +17,12 @@ import (
 
 type PostgresManager struct {
 	dataDir           string
-	port              int
 	dockerCli         *client.Client
 	dbContainerId     string
 	clientContainerId string
 }
 
-func NewPostgresManager(dataDir string, port int) *PostgresManager {
+func NewPostgresManager(dataDir string) *PostgresManager {
 	cli, err := client.NewClientWithOpts(client.FromEnv)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to create Docker client: %v", err))
@@ -31,7 +30,6 @@ func NewPostgresManager(dataDir string, port int) *PostgresManager {
 
 	return &PostgresManager{
 		dataDir:   dataDir,
-		port:      port,
 		dockerCli: cli,
 	}
 }
@@ -48,7 +46,7 @@ func (pm *PostgresManager) StartDatabase() error {
 	// Create container
 	portBinding := nat.PortBinding{
 		HostIP:   "0.0.0.0",
-		HostPort: fmt.Sprintf("%d", pm.port),
+		HostPort: "5432",
 	}
 
 	containerConfig := &container.Config{
@@ -90,7 +88,7 @@ func (pm *PostgresManager) StartDatabase() error {
 }
 
 func (pm *PostgresManager) waitForDatabase() error {
-	connStr := fmt.Sprintf("host=localhost port=%d user=postgres password=postgres dbname=postgres sslmode=disable", pm.port)
+	connStr := "host=localhost port=5432 user=postgres password=postgres dbname=postgres sslmode=disable"
 
 	for i := 0; i < 30; i++ {
 		db, err := sql.Open("postgres", connStr)
@@ -114,7 +112,7 @@ func (pm *PostgresManager) StartClient() error {
 	// Create client container
 	containerConfig := &container.Config{
 		Image:        "postgres:latest",
-		Cmd:          []string{"psql", "-h", "host.docker.internal", fmt.Sprintf("-p%d", pm.port), "-U", "postgres"},
+		Cmd:          []string{"psql", "-h", "host.docker.internal", "-p5432", "-U", "postgres"},
 		Tty:          true,
 		AttachStdin:  true,
 		AttachStdout: true,

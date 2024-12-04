@@ -12,7 +12,6 @@ import (
 
 func main() {
 	dataDir := flag.String("data-dir", "./data", "Directory for database data")
-	port := flag.Int("port", 5432, "Port for PostgreSQL")
 	flag.Parse()
 
 	// Create data directory if it doesn't exist
@@ -20,7 +19,7 @@ func main() {
 		log.Fatalf("Failed to create data directory: %v", err)
 	}
 
-	manager := db.NewPostgresManager(*dataDir, *port)
+	manager := db.NewPostgresManager(*dataDir)
 
 	if err := manager.StartDatabase(); err != nil {
 		log.Fatalf("Failed to start database: %v", err)
