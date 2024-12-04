@@ -204,29 +204,21 @@ func (pm *PostgresManager) StartClient() error {
 	}
 	defer term.Restore(int(os.Stdin.Fd()), oldState)
 
-	// Handle container I/O in goroutines
-	errChan := make(chan error, 1)
+	// Handle container I/O
 	go func() {
-		_, err := io.Copy(os.Stdout, attachResp.Reader)
-		errChan <- err
+		io.Copy(attachResp.Conn, os.Stdin)
 	}()
 
 	go func() {
-		_, err := io.Copy(attachResp.Conn, os.Stdin)
-		errChan <- err
+		io.Copy(os.Stdout, attachResp.Reader)
 	}()
 
-	// Wait for container to exit or I/O error
+	// Wait for container to exit
 	statusCh, errCh := pm.dockerCli.ContainerWait(ctx, pm.clientContainerId, container.WaitConditionNotRunning)
 	select {
 	case err := <-errCh:
 		return fmt.Errorf("error waiting for client container: %v", err)
 	case <-statusCh:
-		return nil
-	case err := <-errChan:
-		if err != nil {
-			return fmt.Errorf("I/O error: %v", err)
-		}
 		return nil
 	}
 }
