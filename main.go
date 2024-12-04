@@ -2,6 +2,7 @@ package main
 
 import (
 	"dbin/cmd/cassandra"
+	"dbin/cmd/dgraph"
 	"dbin/cmd/list"
 	"dbin/cmd/mariadb"
 	"dbin/cmd/mongo"
@@ -29,6 +30,7 @@ func main() {
 		redis.NewCommand(),
 		neo4j.NewCommand(),
 		mariadb.NewCommand(),
+		dgraph.NewCommand(),
 	)
 
 	if err := cmd.Execute(); err != nil {
