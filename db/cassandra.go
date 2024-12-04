@@ -39,12 +39,17 @@ func NewCassandraManager(dataDir string) *CassandraManager {
 func (cm *CassandraManager) StartDatabase() error {
 	ctx := context.Background()
 
-	log.Println("Pulling Cassandra image...")
-	_, err := cm.dockerCli.ImagePull(ctx, "cassandra:latest", image.PullOptions{})
+	_, _, err := cm.dockerCli.ImageInspectWithRaw(ctx, "cassandra:latest")
 	if err != nil {
-		return fmt.Errorf("failed to pull image: %v", err)
+		log.Println("Cassandra image not found locally, pulling...")
+		_, err := cm.dockerCli.ImagePull(ctx, "cassandra:latest", image.PullOptions{})
+		if err != nil {
+			return fmt.Errorf("failed to pull image: %v", err)
+		}
+		log.Println("Image pulled successfully")
+	} else {
+		log.Println("Using existing Cassandra image")
 	}
-	log.Println("Image pulled successfully")
 
 	log.Println("Creating container...")
 	containerConfig := &container.Config{

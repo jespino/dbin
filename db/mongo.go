@@ -39,12 +39,17 @@ func NewMongoManager(dataDir string) *MongoManager {
 func (mm *MongoManager) StartDatabase() error {
 	ctx := context.Background()
 
-	log.Println("Pulling MongoDB image...")
-	_, err := mm.dockerCli.ImagePull(ctx, "mongo:latest", image.PullOptions{})
+	_, _, err := mm.dockerCli.ImageInspectWithRaw(ctx, "mongo:latest")
 	if err != nil {
-		return fmt.Errorf("failed to pull image: %v", err)
+		log.Println("MongoDB image not found locally, pulling...")
+		_, err := mm.dockerCli.ImagePull(ctx, "mongo:latest", image.PullOptions{})
+		if err != nil {
+			return fmt.Errorf("failed to pull image: %v", err)
+		}
+		log.Println("Image pulled successfully")
+	} else {
+		log.Println("Using existing MongoDB image")
 	}
-	log.Println("Image pulled successfully")
 
 	log.Println("Creating container...")
 	containerConfig := &container.Config{

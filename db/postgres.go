@@ -40,12 +40,17 @@ func NewPostgresManager(dataDir string) *PostgresManager {
 func (pm *PostgresManager) StartDatabase() error {
 	ctx := context.Background()
 
-	fmt.Println("Pulling PostgreSQL image...")
-	_, err := pm.dockerCli.ImagePull(ctx, "postgres:latest", image.PullOptions{})
+	_, _, err := pm.dockerCli.ImageInspectWithRaw(ctx, "postgres:latest")
 	if err != nil {
-		return fmt.Errorf("failed to pull image: %v", err)
+		fmt.Println("PostgreSQL image not found locally, pulling...")
+		_, err := pm.dockerCli.ImagePull(ctx, "postgres:latest", image.PullOptions{})
+		if err != nil {
+			return fmt.Errorf("failed to pull image: %v", err)
+		}
+		fmt.Println("Image pulled successfully")
+	} else {
+		fmt.Println("Using existing PostgreSQL image")
 	}
-	fmt.Println("Image pulled successfully")
 
 	fmt.Println("Creating container...")
 	containerConfig := &container.Config{
