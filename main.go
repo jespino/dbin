@@ -7,8 +7,6 @@ import (
 	"dbin/cmd/neo4j"
 	"dbin/cmd/postgres"
 	"dbin/cmd/redis"
-	"dbin/cmd/rethink"
-	"dbin/cmd/surreal"
 	"log"
 	"os"
 
@@ -29,8 +27,6 @@ func main() {
 		cassandra.NewCommand(),
 		redis.NewCommand(),
 		neo4j.NewCommand(),
-		rethink.NewCommand(),
-		surreal.NewCommand(),
 	)
 
 	if err := cmd.Execute(); err != nil {
