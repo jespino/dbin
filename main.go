@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 )
 
@@ -14,12 +15,18 @@ func main() {
 	dataDir := flag.String("data-dir", "./data", "Directory for database data")
 	flag.Parse()
 
+	// Convert to absolute path
+	absDataDir, err := filepath.Abs(*dataDir)
+	if err != nil {
+		log.Fatalf("Failed to get absolute path: %v", err)
+	}
+
 	// Create data directory if it doesn't exist
-	if err := os.MkdirAll(*dataDir, 0755); err != nil {
+	if err := os.MkdirAll(absDataDir, 0755); err != nil {
 		log.Fatalf("Failed to create data directory: %v", err)
 	}
 
-	manager := db.NewPostgresManager(*dataDir)
+	manager := db.NewPostgresManager(absDataDir)
 
 	if err := manager.StartDatabase(); err != nil {
 		log.Fatalf("Failed to start database: %v", err)
