@@ -8,9 +8,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
+	"github.com/docker/docker/api/types"
 	"github.com/docker/go-connections/nat"
 	_ "github.com/lib/pq"
 )
@@ -40,7 +40,7 @@ func (pm *PostgresManager) StartDatabase() error {
 	ctx := context.Background()
 
 	// Pull PostgreSQL image
-	_, err := pm.dockerCli.ImagePull(ctx, "postgres:latest", types.ImagePullOptions{})
+	_, err := pm.dockerCli.ImagePull(ctx, "postgres:latest", types.PullOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to pull image: %v", err)
 	}
@@ -77,7 +77,7 @@ func (pm *PostgresManager) StartDatabase() error {
 	pm.dbContainerId = resp.ID
 
 	// Start container
-	if err := pm.dockerCli.ContainerStart(ctx, pm.dbContainerId, types.ContainerStartOptions{}); err != nil {
+	if err := pm.dockerCli.ContainerStart(ctx, pm.dbContainerId, container.StartOptions{}); err != nil {
 		return fmt.Errorf("failed to start container: %v", err)
 	}
 
@@ -137,7 +137,7 @@ func (pm *PostgresManager) StartClient() error {
 	pm.clientContainerId = resp.ID
 
 	// Attach to container
-	attachResp, err := pm.dockerCli.ContainerAttach(ctx, pm.clientContainerId, types.ContainerAttachOptions{
+	attachResp, err := pm.dockerCli.ContainerAttach(ctx, pm.clientContainerId, container.AttachOptions{
 		Stream: true,
 		Stdin:  true,
 		Stdout: true,
@@ -149,7 +149,7 @@ func (pm *PostgresManager) StartClient() error {
 	defer attachResp.Close()
 
 	// Start container
-	if err := pm.dockerCli.ContainerStart(ctx, pm.clientContainerId, types.ContainerStartOptions{}); err != nil {
+	if err := pm.dockerCli.ContainerStart(ctx, pm.clientContainerId, container.StartOptions{}); err != nil {
 		return fmt.Errorf("failed to start client container: %v", err)
 	}
 
@@ -182,7 +182,7 @@ func (pm *PostgresManager) Cleanup() error {
 	
 	// Remove client container if it exists
 	if pm.clientContainerId != "" {
-		if err := pm.dockerCli.ContainerRemove(ctx, pm.clientContainerId, types.ContainerRemoveOptions{
+		if err := pm.dockerCli.ContainerRemove(ctx, pm.clientContainerId, container.RemoveOptions{
 			Force: true,
 		}); err != nil {
 			return fmt.Errorf("failed to remove client container: %v", err)
@@ -194,7 +194,7 @@ func (pm *PostgresManager) Cleanup() error {
 		if err := pm.dockerCli.ContainerStop(ctx, pm.dbContainerId, container.StopOptions{}); err != nil {
 			return fmt.Errorf("failed to stop database container: %v", err)
 		}
-		if err := pm.dockerCli.ContainerRemove(ctx, pm.dbContainerId, types.ContainerRemoveOptions{
+		if err := pm.dockerCli.ContainerRemove(ctx, pm.dbContainerId, container.RemoveOptions{
 			Force: true,
 		}); err != nil {
 			return fmt.Errorf("failed to remove database container: %v", err)
