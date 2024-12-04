@@ -8,7 +8,6 @@ import (
 	"dbin/cmd/neo4j"
 	"dbin/cmd/postgres"
 	"dbin/cmd/redis"
-	"dbin/cmd/yugabyte"
 	"log"
 	"os"
 
@@ -30,7 +29,6 @@ func main() {
 		redis.NewCommand(),
 		neo4j.NewCommand(),
 		mariadb.NewCommand(),
-		yugabyte.NewCommand(),
 	)
 
 	if err := cmd.Execute(); err != nil {

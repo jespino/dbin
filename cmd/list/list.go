@@ -19,7 +19,6 @@ func NewCommand() *cobra.Command {
 			fmt.Println("- Redis (redis)")
 			fmt.Println("- Neo4j (neo4j)")
 			fmt.Println("- MariaDB (mariadb)")
-			fmt.Println("- YugabyteDB (yugabyte)")
 			return nil
 		},
 	}
