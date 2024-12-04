@@ -73,11 +73,22 @@ func (pm *PostgresManager) waitForDatabase() error {
 }
 
 func (pm *PostgresManager) StartClient() error {
-	cmd := exec.Command("docker", "exec", "-it", pm.dbContainerId, "psql", "-U", "postgres")
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd.Run()
+	for i := 0; i < 3; i++ {
+		cmd := exec.Command("docker", "exec", "-it", pm.dbContainerId, "psql", "-U", "postgres")
+		cmd.Stdin = os.Stdin
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		
+		if err := cmd.Run(); err == nil {
+			return nil
+		}
+		
+		if i < 2 { // Don't sleep after last attempt
+			log.Printf("Failed to connect, retrying in 2 seconds (attempt %d/3)...", i+1)
+			time.Sleep(2 * time.Second)
+		}
+	}
+	return fmt.Errorf("failed to connect after 3 attempts")
 }
 
 func (pm *PostgresManager) Cleanup() error {
