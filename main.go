@@ -3,6 +3,7 @@ package main
 import (
 	"dbin/cmd/cassandra"
 	"dbin/cmd/mongo"
+	"dbin/cmd/neo4j"
 	"dbin/cmd/postgres"
 	"dbin/cmd/redis"
 	"log"
@@ -23,6 +24,7 @@ func main() {
 		mongo.NewCommand(),
 		cassandra.NewCommand(),
 		redis.NewCommand(),
+		neo4j.NewCommand(),
 	)
 
 	if err := cmd.Execute(); err != nil {
