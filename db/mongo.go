@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"os/exec"
@@ -42,11 +43,17 @@ func (mm *MongoManager) StartDatabase() error {
 	_, _, err := mm.dockerCli.ImageInspectWithRaw(ctx, "mongo:latest")
 	if err != nil {
 		log.Println("MongoDB image not found locally, pulling...")
-		_, err := mm.dockerCli.ImagePull(ctx, "mongo:latest", image.PullOptions{})
+		reader, err := mm.dockerCli.ImagePull(ctx, "mongo:latest", image.PullOptions{})
 		if err != nil {
 			return fmt.Errorf("failed to pull image: %v", err)
 		}
-		log.Println("Image pulled successfully")
+		defer reader.Close()
+		
+		// Wait for the pull to complete
+		_, err = io.Copy(os.Stdout, reader)
+		if err != nil {
+			return fmt.Errorf("error while pulling image: %v", err)
+		}
 	} else {
 		log.Println("Using existing MongoDB image")
 	}

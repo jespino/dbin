@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"time"
@@ -43,11 +44,17 @@ func (pm *PostgresManager) StartDatabase() error {
 	_, _, err := pm.dockerCli.ImageInspectWithRaw(ctx, "postgres:latest")
 	if err != nil {
 		fmt.Println("PostgreSQL image not found locally, pulling...")
-		_, err := pm.dockerCli.ImagePull(ctx, "postgres:latest", image.PullOptions{})
+		reader, err := pm.dockerCli.ImagePull(ctx, "postgres:latest", image.PullOptions{})
 		if err != nil {
 			return fmt.Errorf("failed to pull image: %v", err)
 		}
-		fmt.Println("Image pulled successfully")
+		defer reader.Close()
+		
+		// Wait for the pull to complete
+		_, err = io.Copy(os.Stdout, reader)
+		if err != nil {
+			return fmt.Errorf("error while pulling image: %v", err)
+		}
 	} else {
 		fmt.Println("Using existing PostgreSQL image")
 	}
