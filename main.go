@@ -1,6 +1,7 @@
 package main
 
 import (
+	"dbin/cmd/cassandra"
 	"dbin/cmd/mongo"
 	"dbin/cmd/postgres"
 	"log"
@@ -19,6 +20,7 @@ func main() {
 	cmd.AddCommand(
 		postgres.NewCommand(),
 		mongo.NewCommand(),
+		cassandra.NewCommand(),
 	)
 
 	if err := cmd.Execute(); err != nil {
