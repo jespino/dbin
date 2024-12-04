@@ -113,6 +113,19 @@ func (pm *PostgresManager) StartDatabase() error {
 		return fmt.Errorf("database failed to start: %v", err)
 	}
 
+	// Finally remove the network
+	networks, err := pm.dockerCli.NetworkList(ctx, types.NetworkListOptions{})
+	if err == nil {
+		for _, network := range networks {
+			if network.Name == pm.networkName {
+				if err := pm.dockerCli.NetworkRemove(ctx, network.ID); err != nil {
+					fmt.Printf("Warning: failed to remove network: %v\n", err)
+				}
+				break
+			}
+		}
+	}
+
 	return nil
 }
 
@@ -210,17 +223,12 @@ func (pm *PostgresManager) StartClient() error {
 func (pm *PostgresManager) Cleanup() error {
 	ctx := context.Background()
 
-	// Remove network if it exists
-	networks, err := pm.dockerCli.NetworkList(ctx, types.NetworkListOptions{})
-	if err == nil {
-		for _, network := range networks {
-			if network.Name == pm.networkName {
-				if err := pm.dockerCli.NetworkRemove(ctx, network.ID); err != nil {
-					fmt.Printf("Warning: failed to remove network: %v\n", err)
-				}
-				break
-			}
-		}
+	// Disconnect containers from network first
+	if pm.clientContainerId != "" {
+		_ = pm.dockerCli.NetworkDisconnect(ctx, pm.networkName, pm.clientContainerId, true)
+	}
+	if pm.dbContainerId != "" {
+		_ = pm.dockerCli.NetworkDisconnect(ctx, pm.networkName, pm.dbContainerId, true)
 	}
 	// Remove client container if it exists
 	if pm.clientContainerId != "" {
