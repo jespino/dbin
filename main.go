@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 )
 
 func main() {
@@ -24,8 +26,33 @@ func main() {
 		log.Fatalf("Failed to start database: %v", err)
 	}
 
-	fmt.Println("Database is running. Press Ctrl+C to stop.")
-	
-	// Wait for interrupt signal
-	select {}
+	// Set up signal handling
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+
+	// Start client in goroutine
+	clientDone := make(chan error)
+	go func() {
+		if err := manager.StartClient(); err != nil {
+			clientDone <- err
+			return
+		}
+		clientDone <- nil
+	}()
+
+	// Wait for either client to finish or interrupt signal
+	select {
+	case err := <-clientDone:
+		if err != nil {
+			log.Printf("Client error: %v", err)
+		}
+	case <-sigChan:
+		fmt.Println("\nReceived interrupt signal")
+	}
+
+	// Cleanup
+	fmt.Println("Cleaning up...")
+	if err := manager.Cleanup(); err != nil {
+		log.Printf("Cleanup error: %v", err)
+	}
 }
