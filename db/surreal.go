@@ -82,8 +82,6 @@ func (sm *SurrealManager) StartDatabase() error {
 	}
 
 	sm.dbPort = inspect.NetworkSettings.Ports[nat.Port("8000/tcp")][0].HostPort
-		return err
-	}
 
 	log.Printf("SurrealDB is ready and listening on port %s\n", sm.dbPort)
 	
