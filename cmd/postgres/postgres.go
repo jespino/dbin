@@ -39,8 +39,10 @@ func run(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to create data directory: %v", err)
 	}
 
+	log.Printf("Starting PostgreSQL manager with data directory: %s", absDataDir)
 	manager := db.NewPostgresManager(absDataDir)
 
+	log.Println("Initializing database...")
 	if err := manager.StartDatabase(); err != nil {
 		return fmt.Errorf("failed to start database: %v", err)
 	}
@@ -49,10 +51,12 @@ func run(cmd *cobra.Command, args []string) error {
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
 
+	log.Println("Starting psql client...")
 	// Start client in goroutine
 	clientDone := make(chan error, 1)
 	go func() {
 		if err := manager.StartClient(); err != nil {
+			log.Printf("Client error: %v", err)
 			clientDone <- err
 			return
 		}
@@ -71,19 +75,23 @@ func run(cmd *cobra.Command, args []string) error {
 			result = fmt.Errorf("client error: %v", err)
 		}
 		// Clean up after client exits normally
+		log.Println("Client exited, starting cleanup...")
 		go func() {
 			defer wg.Done()
 			if err := manager.Cleanup(); err != nil {
 				log.Printf("Cleanup error: %v", err)
 			}
+			log.Println("Cleanup completed")
 		}()
 	case <-sigChan:
 		// Stop the database container immediately on interrupt
+		log.Println("Received interrupt signal, starting cleanup...")
 		go func() {
 			defer wg.Done()
 			if err := manager.Cleanup(); err != nil {
 				log.Printf("Cleanup error: %v", err)
 			}
+			log.Println("Cleanup completed")
 		}()
 		result = fmt.Errorf("interrupted")
 	}

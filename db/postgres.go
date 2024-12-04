@@ -40,13 +40,14 @@ func NewPostgresManager(dataDir string) *PostgresManager {
 func (pm *PostgresManager) StartDatabase() error {
 	ctx := context.Background()
 
-	// Pull PostgreSQL image
+	fmt.Println("Pulling PostgreSQL image...")
 	_, err := pm.dockerCli.ImagePull(ctx, "postgres:latest", image.PullOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to pull image: %v", err)
 	}
+	fmt.Println("Image pulled successfully")
 
-	// Create container
+	fmt.Println("Creating container...")
 	containerConfig := &container.Config{
 		Image: "postgres:latest",
 		Env: []string{
@@ -80,12 +81,13 @@ func (pm *PostgresManager) StartDatabase() error {
 
 	pm.dbContainerId = resp.ID
 
-	// Start container
+	fmt.Println("Starting container...")
 	if err := pm.dockerCli.ContainerStart(ctx, pm.dbContainerId, container.StartOptions{}); err != nil {
 		return fmt.Errorf("failed to start container: %v", err)
 	}
+	fmt.Println("Container started successfully")
 
-	// Get the actual bound port
+	fmt.Println("Getting container port mapping...")
 	inspect, err := pm.dockerCli.ContainerInspect(ctx, pm.dbContainerId)
 	if err != nil {
 		return fmt.Errorf("failed to inspect container: %v", err)
@@ -93,11 +95,12 @@ func (pm *PostgresManager) StartDatabase() error {
 
 	pm.dbPort = inspect.NetworkSettings.Ports["5432/tcp"][0].HostPort
 
-	// Wait for database to be ready
+	fmt.Println("Waiting for database to be ready...")
 	if err := pm.waitForDatabase(); err != nil {
 		return fmt.Errorf("database failed to start: %v", err)
 	}
 
+	fmt.Printf("Database is ready and listening on port %s\n", pm.dbPort)
 	return nil
 }
 
@@ -105,6 +108,7 @@ func (pm *PostgresManager) waitForDatabase() error {
 	connStr := fmt.Sprintf("host=localhost port=%s user=postgres password=postgres dbname=postgres sslmode=disable", pm.dbPort)
 
 	for i := 0; i < 30; i++ {
+		fmt.Printf("Attempting database connection (attempt %d/30)...\n", i+1)
 		db, err := sql.Open("postgres", connStr)
 		if err == nil {
 			err = db.Ping()
@@ -139,14 +143,19 @@ func (pm *PostgresManager) Cleanup() error {
 
 	// Stop and remove database container
 	if pm.dbContainerId != "" {
+		fmt.Printf("Stopping container %s...\n", pm.dbContainerId)
 		if err := pm.dockerCli.ContainerStop(ctx, pm.dbContainerId, container.StopOptions{}); err != nil {
 			return fmt.Errorf("failed to stop database container: %v", err)
 		}
+		fmt.Println("Container stopped successfully")
+
+		fmt.Println("Removing container...")
 		if err := pm.dockerCli.ContainerRemove(ctx, pm.dbContainerId, container.RemoveOptions{
 			Force: true,
 		}); err != nil {
 			return fmt.Errorf("failed to remove database container: %v", err)
 		}
+		fmt.Println("Container removed successfully")
 	}
 
 	return nil
