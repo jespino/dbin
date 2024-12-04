@@ -43,33 +43,6 @@ func (sm *SurrealManager) StartDatabase() error {
 		return err
 	}
 
-	if sm.dataDir != "" {
-		hostConfig.Binds = []string{
-			fmt.Sprintf("%s:/data", sm.dataDir),
-		}
-	}
-
-	resp, err := sm.dockerCli.ContainerCreate(ctx, containerConfig, hostConfig, nil, nil, "surreal-db")
-	if err != nil {
-		return fmt.Errorf("failed to create container: %v", err)
-	}
-
-	sm.dbContainerId = resp.ID
-
-	log.Println("Starting container...")
-	if err := sm.dockerCli.ContainerStart(ctx, sm.dbContainerId, container.StartOptions{}); err != nil {
-		return fmt.Errorf("failed to start container: %v", err)
-	}
-	log.Println("Container started successfully")
-
-	// Get the assigned port
-	inspect, err := sm.dockerCli.ContainerInspect(ctx, sm.dbContainerId)
-	if err != nil {
-		return fmt.Errorf("failed to inspect container: %v", err)
-	}
-
-	sm.dbPort = inspect.NetworkSettings.Ports[nat.Port("8000/tcp")][0].HostPort
-
 	log.Printf("SurrealDB is ready and listening on port %s\n", sm.dbPort)
 	
 	// Give the server a moment to initialize
