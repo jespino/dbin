@@ -4,6 +4,7 @@ import (
 	"dbin/cmd/cassandra"
 	"dbin/cmd/mongo"
 	"dbin/cmd/postgres"
+	"dbin/cmd/redis"
 	"log"
 	"os"
 
@@ -21,6 +22,7 @@ func main() {
 		postgres.NewCommand(),
 		mongo.NewCommand(),
 		cassandra.NewCommand(),
+		redis.NewCommand(),
 	)
 
 	if err := cmd.Execute(); err != nil {
