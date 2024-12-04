@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -12,6 +13,21 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
 )
+
+type dockerMessage struct {
+	Status         string `json:"status"`
+	ID            string `json:"id"`
+	Progress      string `json:"progress"`
+	ProgressDetail struct {
+		Current int64 `json:"current"`
+		Total   int64 `json:"total"`
+	} `json:"progressDetail"`
+}
+
+type progressInfo struct {
+	current int64
+	total   int64
+}
 
 // Common interface for database managers
 type DatabaseManager interface {
@@ -55,11 +71,50 @@ func (bm *BaseManager) PullImageIfNeeded(ctx context.Context, imageName string) 
 		}
 		defer reader.Close()
 		
-		// Wait for the pull to complete
-		_, err = io.Copy(os.Stdout, reader)
-		if err != nil {
-			return fmt.Errorf("error while pulling image: %v", err)
+		// Process and display pull progress
+		decoder := json.NewDecoder(reader)
+		progressBars := make(map[string]*progressInfo)
+
+		for decoder.More() {
+			var msg dockerMessage
+			if err := decoder.Decode(&msg); err != nil {
+				if err == io.EOF {
+					break
+				}
+				return fmt.Errorf("error decoding docker message: %v", err)
+			}
+
+			if msg.Status == "Downloading" && msg.Progress != "" {
+				info := progressBars[msg.ID]
+				if info == nil {
+					info = &progressInfo{}
+					progressBars[msg.ID] = info
+				}
+
+				// Clear previous lines
+				for range progressBars {
+					fmt.Print("\033[1A\033[K") // Move up and clear line
+				}
+
+				// Print updated progress for all layers
+				for id, pInfo := range progressBars {
+					current := msg.ProgressDetail.Current
+					total := msg.ProgressDetail.Total
+					if id == msg.ID {
+						pInfo.current = current
+						pInfo.total = total
+					}
+					if pInfo.total > 0 {
+						percentage := float64(pInfo.current) / float64(pInfo.total) * 100
+						fmt.Printf("Downloading %s: %.1f%% of %.2f MB\n",
+							id[:12],
+							percentage,
+							float64(pInfo.total)/(1024*1024))
+					}
+				}
+			}
 		}
+		fmt.Println() // Add final newline
 	} else {
 		log.Printf("Using existing %s image\n", imageName)
 	}
