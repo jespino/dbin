@@ -69,9 +69,12 @@ func (pm *PostgresManager) StartDatabase() error {
 				},
 			},
 		},
-		Binds: []string{
+	}
+
+	if pm.dataDir != "" {
+		hostConfig.Binds = []string{
 			fmt.Sprintf("%s:/var/lib/postgresql/data", pm.dataDir),
-		},
+		}
 	}
 
 	resp, err := pm.dockerCli.ContainerCreate(ctx, containerConfig, hostConfig, nil, nil, "postgres-db")

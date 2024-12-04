@@ -28,18 +28,23 @@ func NewCommand() *cobra.Command {
 }
 
 func run(cmd *cobra.Command, args []string) error {
-	// Convert to absolute path
-	absDataDir, err := filepath.Abs(dataDir)
-	if err != nil {
-		return fmt.Errorf("failed to get absolute path: %v", err)
+	var absDataDir string
+	if dataDir != "./data" { // Only process if explicitly set
+		var err error
+		absDataDir, err = filepath.Abs(dataDir)
+		if err != nil {
+			return fmt.Errorf("failed to get absolute path: %v", err)
+		}
+
+		// Create data directory if it doesn't exist
+		if err := os.MkdirAll(absDataDir, 0755); err != nil {
+			return fmt.Errorf("failed to create data directory: %v", err)
+		}
+		log.Printf("Starting MongoDB manager with data directory: %s", absDataDir)
+	} else {
+		log.Println("Starting MongoDB manager with ephemeral storage")
 	}
 
-	// Create data directory if it doesn't exist
-	if err := os.MkdirAll(absDataDir, 0755); err != nil {
-		return fmt.Errorf("failed to create data directory: %v", err)
-	}
-
-	log.Printf("Starting MongoDB manager with data directory: %s", absDataDir)
 	manager := db.NewMongoManager(absDataDir)
 
 	log.Println("Initializing database...")

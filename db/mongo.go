@@ -63,9 +63,12 @@ func (mm *MongoManager) StartDatabase() error {
 				},
 			},
 		},
-		Binds: []string{
+	}
+
+	if mm.dataDir != "" {
+		hostConfig.Binds = []string{
 			fmt.Sprintf("%s:/data/db", mm.dataDir),
-		},
+		}
 	}
 
 	resp, err := mm.dockerCli.ContainerCreate(ctx, containerConfig, hostConfig, nil, nil, "mongo-db")
