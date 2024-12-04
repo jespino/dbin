@@ -19,6 +19,7 @@ func NewCommand() *cobra.Command {
 			fmt.Println("- Redis (redis)")
 			fmt.Println("- Neo4j (neo4j)")
 			fmt.Println("- SurrealDB (surreal)")
+			fmt.Println("- RethinkDB (rethink)")
 			return nil
 		},
 	}
