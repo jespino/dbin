@@ -20,6 +20,7 @@ type PostgresManager struct {
 	dockerCli         *client.Client
 	dbContainerId     string
 	clientContainerId string
+	dbPort            string
 }
 
 func NewPostgresManager(dataDir string) *PostgresManager {
@@ -47,11 +48,6 @@ func (pm *PostgresManager) StartDatabase() error {
 	}
 
 	// Create container
-	portBinding := nat.PortBinding{
-		HostIP:   "0.0.0.0",
-		HostPort: "5432",
-	}
-
 	containerConfig := &container.Config{
 		Image: "postgres:latest",
 		Env: []string{
@@ -59,11 +55,19 @@ func (pm *PostgresManager) StartDatabase() error {
 			"POSTGRES_USER=postgres",
 			"POSTGRES_DB=postgres",
 		},
+		ExposedPorts: nat.PortSet{
+			"5432/tcp": struct{}{},
+		},
 	}
 
 	hostConfig := &container.HostConfig{
 		PortBindings: nat.PortMap{
-			"5432/tcp": []nat.PortBinding{portBinding},
+			"5432/tcp": []nat.PortBinding{
+				{
+					HostIP:   "0.0.0.0",
+					HostPort: "0", // Let Docker assign a random port
+				},
+			},
 		},
 		Binds: []string{
 			fmt.Sprintf("%s:/var/lib/postgresql/data", pm.dataDir),
@@ -82,6 +86,14 @@ func (pm *PostgresManager) StartDatabase() error {
 		return fmt.Errorf("failed to start container: %v", err)
 	}
 
+	// Get the actual bound port
+	inspect, err := pm.dockerCli.ContainerInspect(ctx, pm.dbContainerId)
+	if err != nil {
+		return fmt.Errorf("failed to inspect container: %v", err)
+	}
+
+	pm.dbPort = inspect.NetworkSettings.Ports["5432/tcp"][0].HostPort
+
 	// Wait for database to be ready
 	if err := pm.waitForDatabase(); err != nil {
 		return fmt.Errorf("database failed to start: %v", err)
@@ -91,7 +103,7 @@ func (pm *PostgresManager) StartDatabase() error {
 }
 
 func (pm *PostgresManager) waitForDatabase() error {
-	connStr := "host=localhost port=5432 user=postgres password=postgres dbname=postgres sslmode=disable"
+	connStr := fmt.Sprintf("host=localhost port=%s user=postgres password=postgres dbname=postgres sslmode=disable", pm.dbPort)
 
 	for i := 0; i < 30; i++ {
 		db, err := sql.Open("postgres", connStr)
@@ -115,7 +127,7 @@ func (pm *PostgresManager) StartClient() error {
 	// Create client container
 	containerConfig := &container.Config{
 		Image:        "postgres:latest",
-		Cmd:          []string{"psql", "-h", "host.docker.internal", "-p5432", "-U", "postgres"},
+		Cmd:          []string{"psql", "-h", "host.docker.internal", fmt.Sprintf("-p%s", pm.dbPort), "-U", "postgres"},
 		Tty:          true,
 		AttachStdin:  true,
 		AttachStdout: true,
