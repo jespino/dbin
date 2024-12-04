@@ -8,7 +8,6 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
@@ -42,7 +41,7 @@ func (pm *PostgresManager) StartDatabase() error {
 	ctx := context.Background()
 
 	// Pull PostgreSQL image
-	_, err = pm.dockerCli.ImagePull(ctx, "postgres:latest", image.PullOptions{})
+	_, err := pm.dockerCli.ImagePull(ctx, "postgres:latest", image.PullOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to pull image: %v", err)
 	}
