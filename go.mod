@@ -8,6 +8,7 @@ require (
 	github.com/docker/docker v27.3.1+incompatible
 	github.com/docker/go-connections v0.4.0
 	github.com/lib/pq v1.10.9
+	github.com/spf13/cobra v1.8.0
 	golang.org/x/term v0.26.0
 )
 
