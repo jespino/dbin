@@ -40,14 +40,6 @@ func run(cmd *cobra.Command, args []string) error {
 
 	manager := db.NewPostgresManager(absDataDir)
 
-	// Ensure cleanup happens no matter how we exit
-	defer func() {
-		fmt.Println("\nCleaning up...")
-		if err := manager.Cleanup(); err != nil {
-			log.Printf("Cleanup error: %v", err)
-		}
-	}()
-
 	if err := manager.StartDatabase(); err != nil {
 		return fmt.Errorf("failed to start database: %v", err)
 	}
@@ -72,9 +64,12 @@ func run(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return fmt.Errorf("client error: %v", err)
 		}
+		return nil
 	case <-sigChan:
+		// Stop the database container immediately on interrupt
+		if err := manager.Cleanup(); err != nil {
+			log.Printf("Cleanup error: %v", err)
+		}
 		return fmt.Errorf("interrupted")
 	}
-
-	return nil
 }
