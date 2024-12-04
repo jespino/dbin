@@ -72,7 +72,12 @@ func (bm *BaseManager) PullImageIfNeeded(ctx context.Context, imageName string) 
 		
 		// Process and display pull progress
 		decoder := json.NewDecoder(reader)
-		progressBars := make(map[string]*progressInfo)
+		type layerProgress struct {
+			id   string
+			info *progressInfo
+		}
+		var layers []layerProgress
+		layerMap := make(map[string]int) // Map ID to index in layers slice
 
 		for decoder.More() {
 			var msg dockerMessage
@@ -84,31 +89,36 @@ func (bm *BaseManager) PullImageIfNeeded(ctx context.Context, imageName string) 
 			}
 
 			if msg.Status == "Downloading" && msg.Progress != "" {
-				info := progressBars[msg.ID]
-				if info == nil {
-					info = &progressInfo{}
-					progressBars[msg.ID] = info
+				idx, exists := layerMap[msg.ID]
+				if !exists {
+					// New layer, add to slice
+					layers = append(layers, layerProgress{
+						id:   msg.ID,
+						info: &progressInfo{},
+					})
+					idx = len(layers) - 1
+					layerMap[msg.ID] = idx
 				}
 
+				// Update progress
+				current := msg.ProgressDetail.Current
+				total := msg.ProgressDetail.Total
+				layers[idx].info.current = current
+				layers[idx].info.total = total
+
 				// Clear previous lines
-				for range progressBars {
+				for range layers {
 					fmt.Print("\033[1A\033[K") // Move up and clear line
 				}
 
-				// Print updated progress for all layers
-				for id, pInfo := range progressBars {
-					current := msg.ProgressDetail.Current
-					total := msg.ProgressDetail.Total
-					if id == msg.ID {
-						pInfo.current = current
-						pInfo.total = total
-					}
-					if pInfo.total > 0 {
-						percentage := float64(pInfo.current) / float64(pInfo.total) * 100
+				// Print progress for all layers in order
+				for _, layer := range layers {
+					if layer.info.total > 0 {
+						percentage := float64(layer.info.current) / float64(layer.info.total) * 100
 						fmt.Printf("Downloading %s: %.1f%% of %.2f MB\n",
-							id[:12],
+							layer.id[:12],
 							percentage,
-							float64(pInfo.total)/(1024*1024))
+							float64(layer.info.total)/(1024*1024))
 					}
 				}
 			}
