@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"io"
 	"os"
 	"syscall"
 	"time"
@@ -15,7 +14,6 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
 	_ "github.com/lib/pq"
-	"golang.org/x/term"
 )
 
 type PostgresManager struct {
