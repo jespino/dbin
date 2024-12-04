@@ -14,6 +14,7 @@ import (
 	"github.com/docker/docker/client"
 	"github.com/docker/go-connections/nat"
 	_ "github.com/lib/pq"
+	"golang.org/x/term"
 )
 
 type PostgresManager struct {
@@ -196,28 +197,38 @@ func (pm *PostgresManager) StartClient() error {
 		return fmt.Errorf("failed to connect container to network: %v", err)
 	}
 
-	// Connect container IO with os.Stdin/os.Stdout
+	// Set up raw mode
+	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
+	if err != nil {
+		return fmt.Errorf("failed to set raw terminal: %v", err)
+	}
+	defer term.Restore(int(os.Stdin.Fd()), oldState)
+
+	// Handle container I/O in goroutines
+	errChan := make(chan error, 1)
 	go func() {
-		_, err := attachResp.Conn.Write([]byte{})
-		if err != nil {
-			fmt.Printf("Error writing to container: %v\n", err)
-		}
+		_, err := io.Copy(os.Stdout, attachResp.Reader)
+		errChan <- err
 	}()
 
-	go io.Copy(os.Stdout, attachResp.Reader)
-	go io.Copy(attachResp.Conn, os.Stdin)
+	go func() {
+		_, err := io.Copy(attachResp.Conn, os.Stdin)
+		errChan <- err
+	}()
 
-	// Wait for container to exit
+	// Wait for container to exit or I/O error
 	statusCh, errCh := pm.dockerCli.ContainerWait(ctx, pm.clientContainerId, container.WaitConditionNotRunning)
 	select {
 	case err := <-errCh:
-		if err != nil {
-			return fmt.Errorf("error waiting for client container: %v", err)
-		}
+		return fmt.Errorf("error waiting for client container: %v", err)
 	case <-statusCh:
+		return nil
+	case err := <-errChan:
+		if err != nil {
+			return fmt.Errorf("I/O error: %v", err)
+		}
+		return nil
 	}
-
-	return nil
 }
 
 func (pm *PostgresManager) Cleanup() error {
