@@ -40,7 +40,7 @@ func (pm *PostgresManager) StartDatabase() error {
 	ctx := context.Background()
 
 	// Pull PostgreSQL image
-	_, err := pm.dockerCli.ImagePull(ctx, "postgres:latest", types.PullOptions{})
+	_, err := pm.dockerCli.ImagePull(ctx, "postgres:latest", types.ImagePullOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to pull image: %v", err)
 	}
