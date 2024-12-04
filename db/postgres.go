@@ -21,7 +21,6 @@ type PostgresManager struct {
 	dockerCli     *client.Client
 	dbContainerId string
 	dbPort        string
-	networkName   string
 }
 
 func NewPostgresManager(dataDir string) *PostgresManager {
@@ -34,20 +33,13 @@ func NewPostgresManager(dataDir string) *PostgresManager {
 	}
 
 	return &PostgresManager{
-		dataDir:     dataDir,
-		dockerCli:   cli,
-		networkName: "postgres-network",
+		dataDir:   dataDir,
+		dockerCli: cli,
 	}
 }
 
 func (pm *PostgresManager) StartDatabase() error {
 	ctx := context.Background()
-
-	// Create network
-	_, err := pm.dockerCli.NetworkCreate(ctx, pm.networkName, types.NetworkCreate{})
-	if err != nil {
-		return fmt.Errorf("failed to create network: %v", err)
-	}
 
 	// Pull PostgreSQL image
 	_, err = pm.dockerCli.ImagePull(ctx, "postgres:latest", image.PullOptions{})
@@ -94,11 +86,6 @@ func (pm *PostgresManager) StartDatabase() error {
 		return fmt.Errorf("failed to start container: %v", err)
 	}
 
-	// Connect container to network
-	if err := pm.dockerCli.NetworkConnect(ctx, pm.networkName, pm.dbContainerId, nil); err != nil {
-		return fmt.Errorf("failed to connect container to network: %v", err)
-	}
-
 	// Get the actual bound port
 	inspect, err := pm.dockerCli.ContainerInspect(ctx, pm.dbContainerId)
 	if err != nil {
@@ -110,19 +97,6 @@ func (pm *PostgresManager) StartDatabase() error {
 	// Wait for database to be ready
 	if err := pm.waitForDatabase(); err != nil {
 		return fmt.Errorf("database failed to start: %v", err)
-	}
-
-	// Finally remove the network
-	networks, err := pm.dockerCli.NetworkList(ctx, types.NetworkListOptions{})
-	if err == nil {
-		for _, network := range networks {
-			if network.Name == pm.networkName {
-				if err := pm.dockerCli.NetworkRemove(ctx, network.ID); err != nil {
-					fmt.Printf("Warning: failed to remove network: %v\n", err)
-				}
-				break
-			}
-		}
 	}
 
 	return nil
@@ -163,11 +137,6 @@ func (pm *PostgresManager) StartClient() error {
 
 func (pm *PostgresManager) Cleanup() error {
 	ctx := context.Background()
-
-	// Disconnect database from network
-	if pm.dbContainerId != "" {
-		_ = pm.dockerCli.NetworkDisconnect(ctx, pm.networkName, pm.dbContainerId, true)
-	}
 
 	// Stop and remove database container
 	if pm.dbContainerId != "" {
