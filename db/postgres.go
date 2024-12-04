@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"syscall"
 	"time"
 
 	"github.com/docker/docker/api/types"
@@ -18,12 +19,11 @@ import (
 )
 
 type PostgresManager struct {
-	dataDir           string
-	dockerCli         *client.Client
-	dbContainerId     string
-	clientContainerId string
-	dbPort            string
-	networkName       string
+	dataDir       string
+	dockerCli     *client.Client
+	dbContainerId string
+	dbPort        string
+	networkName   string
 }
 
 func NewPostgresManager(dataDir string) *PostgresManager {
@@ -150,96 +150,25 @@ func (pm *PostgresManager) waitForDatabase() error {
 }
 
 func (pm *PostgresManager) StartClient() error {
-	ctx := context.Background()
-
-	// Create client container
-	containerConfig := &container.Config{
-		Image:        "postgres:latest",
-		Cmd:          []string{"psql", "-h", "postgres-db", "-p", "5432", "-U", "postgres"},
-		Tty:          true,
-		AttachStdin:  true,
-		AttachStdout: true,
-		AttachStderr: true,
-		OpenStdin:    true,
-		Env: []string{
-			"PGPASSWORD=postgres",
-		},
+	args := []string{
+		"docker", "exec",
+		"-it",
+		"--rm",
+		pm.dbContainerId,
+		"psql",
+		"-U", "postgres",
 	}
 
-	hostConfig := &container.HostConfig{}
-
-	resp, err := pm.dockerCli.ContainerCreate(ctx, containerConfig, hostConfig, nil, nil, "postgres-client")
-	if err != nil {
-		return fmt.Errorf("failed to create client container: %v", err)
-	}
-
-	pm.clientContainerId = resp.ID
-
-	// Attach to container
-	attachResp, err := pm.dockerCli.ContainerAttach(ctx, pm.clientContainerId, container.AttachOptions{
-		Stream: true,
-		Stdin:  true,
-		Stdout: true,
-		Stderr: true,
-	})
-	if err != nil {
-		return fmt.Errorf("failed to attach to client container: %v", err)
-	}
-	defer attachResp.Close()
-
-	// Start container
-	if err := pm.dockerCli.ContainerStart(ctx, pm.clientContainerId, container.StartOptions{}); err != nil {
-		return fmt.Errorf("failed to start client container: %v", err)
-	}
-
-	// Connect container to network
-	if err := pm.dockerCli.NetworkConnect(ctx, pm.networkName, pm.clientContainerId, nil); err != nil {
-		return fmt.Errorf("failed to connect container to network: %v", err)
-	}
-
-	// Set up raw mode
-	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
-	if err != nil {
-		return fmt.Errorf("failed to set raw terminal: %v", err)
-	}
-	defer term.Restore(int(os.Stdin.Fd()), oldState)
-
-	// Handle container I/O
-	go func() {
-		io.Copy(attachResp.Conn, os.Stdin)
-	}()
-
-	go func() {
-		io.Copy(os.Stdout, attachResp.Reader)
-	}()
-
-	// Wait for container to exit
-	statusCh, errCh := pm.dockerCli.ContainerWait(ctx, pm.clientContainerId, container.WaitConditionNotRunning)
-	select {
-	case err := <-errCh:
-		return fmt.Errorf("error waiting for client container: %v", err)
-	case <-statusCh:
-		return nil
-	}
+	// Replace current process with psql
+	return syscall.Exec("/usr/bin/docker", args, os.Environ())
 }
 
 func (pm *PostgresManager) Cleanup() error {
 	ctx := context.Background()
 
-	// Disconnect containers from network first
-	if pm.clientContainerId != "" {
-		_ = pm.dockerCli.NetworkDisconnect(ctx, pm.networkName, pm.clientContainerId, true)
-	}
+	// Disconnect database from network
 	if pm.dbContainerId != "" {
 		_ = pm.dockerCli.NetworkDisconnect(ctx, pm.networkName, pm.dbContainerId, true)
-	}
-	// Remove client container if it exists
-	if pm.clientContainerId != "" {
-		if err := pm.dockerCli.ContainerRemove(ctx, pm.clientContainerId, container.RemoveOptions{
-			Force: true,
-		}); err != nil {
-			return fmt.Errorf("failed to remove client container: %v", err)
-		}
 	}
 
 	// Stop and remove database container
