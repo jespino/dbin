@@ -8,6 +8,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/client"
@@ -21,6 +22,7 @@ type PostgresManager struct {
 	dbContainerId     string
 	clientContainerId string
 	dbPort            string
+	networkName       string
 }
 
 func NewPostgresManager(dataDir string) *PostgresManager {
@@ -33,13 +35,20 @@ func NewPostgresManager(dataDir string) *PostgresManager {
 	}
 
 	return &PostgresManager{
-		dataDir:   dataDir,
-		dockerCli: cli,
+		dataDir:     dataDir,
+		dockerCli:   cli,
+		networkName: "postgres-network",
 	}
 }
 
 func (pm *PostgresManager) StartDatabase() error {
 	ctx := context.Background()
+
+	// Create network
+	_, err := pm.dockerCli.NetworkCreate(ctx, pm.networkName, types.NetworkCreate{})
+	if err != nil {
+		return fmt.Errorf("failed to create network: %v", err)
+	}
 
 	// Pull PostgreSQL image
 	_, err := pm.dockerCli.ImagePull(ctx, "postgres:latest", image.PullOptions{})
@@ -74,7 +83,7 @@ func (pm *PostgresManager) StartDatabase() error {
 		},
 	}
 
-	resp, err := pm.dockerCli.ContainerCreate(ctx, containerConfig, hostConfig, nil, nil, "")
+	resp, err := pm.dockerCli.ContainerCreate(ctx, containerConfig, hostConfig, nil, nil, "postgres-db")
 	if err != nil {
 		return fmt.Errorf("failed to create container: %v", err)
 	}
@@ -84,6 +93,11 @@ func (pm *PostgresManager) StartDatabase() error {
 	// Start container
 	if err := pm.dockerCli.ContainerStart(ctx, pm.dbContainerId, container.StartOptions{}); err != nil {
 		return fmt.Errorf("failed to start container: %v", err)
+	}
+
+	// Connect container to network
+	if err := pm.dockerCli.NetworkConnect(ctx, pm.networkName, pm.dbContainerId, nil); err != nil {
+		return fmt.Errorf("failed to connect container to network: %v", err)
 	}
 
 	// Get the actual bound port
@@ -127,7 +141,7 @@ func (pm *PostgresManager) StartClient() error {
 	// Create client container
 	containerConfig := &container.Config{
 		Image:        "postgres:latest",
-		Cmd:          []string{"psql", "-h", "host.docker.internal", fmt.Sprintf("-p%s", pm.dbPort), "-U", "postgres"},
+		Cmd:          []string{"psql", "-h", "postgres-db", "-p", "5432", "-U", "postgres"},
 		Tty:          true,
 		AttachStdin:  true,
 		AttachStdout: true,
@@ -138,11 +152,9 @@ func (pm *PostgresManager) StartClient() error {
 		},
 	}
 
-	hostConfig := &container.HostConfig{
-		NetworkMode: "host",
-	}
+	hostConfig := &container.HostConfig{}
 
-	resp, err := pm.dockerCli.ContainerCreate(ctx, containerConfig, hostConfig, nil, nil, "")
+	resp, err := pm.dockerCli.ContainerCreate(ctx, containerConfig, hostConfig, nil, nil, "postgres-client")
 	if err != nil {
 		return fmt.Errorf("failed to create client container: %v", err)
 	}
@@ -164,6 +176,11 @@ func (pm *PostgresManager) StartClient() error {
 	// Start container
 	if err := pm.dockerCli.ContainerStart(ctx, pm.clientContainerId, container.StartOptions{}); err != nil {
 		return fmt.Errorf("failed to start client container: %v", err)
+	}
+
+	// Connect container to network
+	if err := pm.dockerCli.NetworkConnect(ctx, pm.networkName, pm.clientContainerId, nil); err != nil {
+		return fmt.Errorf("failed to connect container to network: %v", err)
 	}
 
 	// Connect container IO with os.Stdin/os.Stdout
@@ -191,6 +208,20 @@ func (pm *PostgresManager) StartClient() error {
 }
 
 func (pm *PostgresManager) Cleanup() error {
+	ctx := context.Background()
+
+	// Remove network if it exists
+	networks, err := pm.dockerCli.NetworkList(ctx, types.NetworkListOptions{})
+	if err == nil {
+		for _, network := range networks {
+			if network.Name == pm.networkName {
+				if err := pm.dockerCli.NetworkRemove(ctx, network.ID); err != nil {
+					fmt.Printf("Warning: failed to remove network: %v\n", err)
+				}
+				break
+			}
+		}
+	}
 	ctx := context.Background()
 
 	// Remove client container if it exists
