@@ -7,6 +7,9 @@ import (
 	"os"
 	"os/exec"
 	"time"
+
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/go-connections/nat"
 )
 
 type SurrealManager struct {
@@ -36,24 +39,8 @@ func (sm *SurrealManager) StartDatabase() error {
 		"SURREAL_PASS=root",
 	}
 
-	containerConfig := &container.Config{
-		Image: "surrealdb/surrealdb:latest",
-		Env:   env,
-		Cmd:   []string{"start", "--user", "root", "--pass", "root"},
-		ExposedPorts: nat.PortSet{
-			nat.Port("8000/tcp"): struct{}{},
-		},
-	}
-
-	hostConfig := &container.HostConfig{
-		PortBindings: nat.PortMap{
-			nat.Port("8000/tcp"): []nat.PortBinding{
-				{
-					HostIP:   "0.0.0.0",
-					HostPort: "0", // Let Docker assign a random port
-				},
-			},
-		},
+	if err := sm.CreateContainer(ctx, "surrealdb/surrealdb:latest", "surreal-db", "8000/tcp", env, "/data"); err != nil {
+		return err
 	}
 
 	if sm.dataDir != "" {
