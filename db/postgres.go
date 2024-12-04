@@ -17,98 +17,36 @@ import (
 )
 
 type PostgresManager struct {
-	dataDir       string
-	dockerCli     *client.Client
-	dbContainerId string
-	dbPort        string
+	*BaseManager
 }
 
 func NewPostgresManager(dataDir string) *PostgresManager {
-	cli, err := client.NewClientWithOpts(
-		client.FromEnv,
-		client.WithVersion("1.46"),
-	)
+	base, err := NewBaseManager(dataDir)
 	if err != nil {
-		panic(fmt.Sprintf("Failed to create Docker client: %v", err))
+		panic(fmt.Sprintf("Failed to create base manager: %v", err))
 	}
 
 	return &PostgresManager{
-		dataDir:   dataDir,
-		dockerCli: cli,
+		BaseManager: base,
 	}
 }
 
 func (pm *PostgresManager) StartDatabase() error {
 	ctx := context.Background()
 
-	_, _, err := pm.dockerCli.ImageInspectWithRaw(ctx, "postgres:latest")
-	if err != nil {
-		fmt.Println("PostgreSQL image not found locally, pulling...")
-		reader, err := pm.dockerCli.ImagePull(ctx, "postgres:latest", image.PullOptions{})
-		if err != nil {
-			return fmt.Errorf("failed to pull image: %v", err)
-		}
-		defer reader.Close()
-		
-		// Wait for the pull to complete
-		_, err = io.Copy(os.Stdout, reader)
-		if err != nil {
-			return fmt.Errorf("error while pulling image: %v", err)
-		}
-	} else {
-		fmt.Println("Using existing PostgreSQL image")
+	if err := pm.PullImageIfNeeded(ctx, "postgres:latest"); err != nil {
+		return err
 	}
 
-	fmt.Println("Creating container...")
-	containerConfig := &container.Config{
-		Image: "postgres:latest",
-		Env: []string{
-			"POSTGRES_PASSWORD=postgres",
-			"POSTGRES_USER=postgres",
-			"POSTGRES_DB=postgres",
-		},
-		ExposedPorts: nat.PortSet{
-			"5432/tcp": struct{}{},
-		},
+	env := []string{
+		"POSTGRES_PASSWORD=postgres",
+		"POSTGRES_USER=postgres",
+		"POSTGRES_DB=postgres",
 	}
 
-	hostConfig := &container.HostConfig{
-		PortBindings: nat.PortMap{
-			"5432/tcp": []nat.PortBinding{
-				{
-					HostIP:   "0.0.0.0",
-					HostPort: "0", // Let Docker assign a random port
-				},
-			},
-		},
+	if err := pm.CreateContainer(ctx, "postgres:latest", "postgres-db", "5432/tcp", env, "/var/lib/postgresql/data"); err != nil {
+		return err
 	}
-
-	if pm.dataDir != "" {
-		hostConfig.Binds = []string{
-			fmt.Sprintf("%s:/var/lib/postgresql/data", pm.dataDir),
-		}
-	}
-
-	resp, err := pm.dockerCli.ContainerCreate(ctx, containerConfig, hostConfig, nil, nil, "postgres-db")
-	if err != nil {
-		return fmt.Errorf("failed to create container: %v", err)
-	}
-
-	pm.dbContainerId = resp.ID
-
-	fmt.Println("Starting container...")
-	if err := pm.dockerCli.ContainerStart(ctx, pm.dbContainerId, container.StartOptions{}); err != nil {
-		return fmt.Errorf("failed to start container: %v", err)
-	}
-	fmt.Println("Container started successfully")
-
-	fmt.Println("Getting container port mapping...")
-	inspect, err := pm.dockerCli.ContainerInspect(ctx, pm.dbContainerId)
-	if err != nil {
-		return fmt.Errorf("failed to inspect container: %v", err)
-	}
-
-	pm.dbPort = inspect.NetworkSettings.Ports["5432/tcp"][0].HostPort
 
 	fmt.Println("Waiting for database to be ready...")
 	if err := pm.waitForDatabase(); err != nil {
@@ -150,23 +88,5 @@ func (pm *PostgresManager) StartClient() error {
 func (pm *PostgresManager) Cleanup() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-
-	// Stop and remove database container
-	if pm.dbContainerId != "" {
-		fmt.Printf("Stopping container %s...\n", pm.dbContainerId)
-		if err := pm.dockerCli.ContainerStop(ctx, pm.dbContainerId, container.StopOptions{}); err != nil {
-			return fmt.Errorf("failed to stop database container: %v", err)
-		}
-		fmt.Println("Container stopped successfully")
-
-		fmt.Println("Removing container...")
-		if err := pm.dockerCli.ContainerRemove(ctx, pm.dbContainerId, container.RemoveOptions{
-			Force: true,
-		}); err != nil {
-			return fmt.Errorf("failed to remove database container: %v", err)
-		}
-		fmt.Println("Container removed successfully")
-	}
-
-	return nil
+	return pm.BaseManager.Cleanup(ctx)
 }
