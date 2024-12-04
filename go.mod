@@ -1,4 +1,4 @@
-module dbmanager
+module dbin
 
 go 1.21
 

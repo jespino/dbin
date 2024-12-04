@@ -1,7 +1,7 @@
 package main
 
 import (
-	"dbmanager/db"
+	"dbin/db"
 	"flag"
 	"fmt"
 	"log"
