@@ -64,6 +64,10 @@ func run(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return fmt.Errorf("client error: %v", err)
 		}
+		// Clean up after client exits normally
+		if err := manager.Cleanup(); err != nil {
+			log.Printf("Cleanup error: %v", err)
+		}
 		return nil
 	case <-sigChan:
 		// Stop the database container immediately on interrupt
