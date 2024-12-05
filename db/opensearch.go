@@ -7,6 +7,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 )
 
@@ -47,6 +48,13 @@ func (om *OpenSearchManager) StartDatabase() error {
 		return err
 	}
 
+	// Create a dedicated network for OpenSearch containers
+	networkName := "opensearch-net"
+	networkResponse, err := om.dockerCli.NetworkCreate(ctx, networkName, types.NetworkCreate{})
+	if err != nil {
+		return fmt.Errorf("failed to create network: %v", err)
+	}
+
 	// Start OpenSearch container first
 	env := []string{
 		"discovery.type=single-node",
@@ -61,6 +69,11 @@ func (om *OpenSearchManager) StartDatabase() error {
 		return err
 	}
 	om.opensearchContainerId = om.dbContainerId
+
+	// Connect OpenSearch container to the network
+	if err := om.dockerCli.NetworkConnect(ctx, networkResponse.ID, om.opensearchContainerId, nil); err != nil {
+		return fmt.Errorf("failed to connect OpenSearch to network: %v", err)
+	}
 
 	// Wait for OpenSearch to be ready
 	time.Sleep(10 * time.Second)
@@ -77,6 +90,11 @@ func (om *OpenSearchManager) StartDatabase() error {
 	}
 	om.dashboardsContainerId = om.dbContainerId
 
+	// Connect Dashboards container to the network
+	if err := om.dockerCli.NetworkConnect(ctx, networkResponse.ID, om.dashboardsContainerId, nil); err != nil {
+		return fmt.Errorf("failed to connect Dashboards to network: %v", err)
+	}
+
 	log.Printf("OpenSearch is ready on port %s and Dashboards is accessible on port %s\n", om.dbPort, om.dashboardsPort)
 	return nil
 }
@@ -89,7 +107,7 @@ func (om *OpenSearchManager) Cleanup() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	// Clean up both containers
+	// Clean up both containers and network
 	if om.dashboardsContainerId != "" {
 		if err := om.dockerCli.ContainerStop(ctx, om.dashboardsContainerId, container.StopOptions{}); err != nil {
 			log.Printf("Warning: Failed to stop Dashboards container: %v", err)
@@ -105,6 +123,19 @@ func (om *OpenSearchManager) Cleanup() error {
 		}
 		if err := om.dockerCli.ContainerRemove(ctx, om.opensearchContainerId, container.RemoveOptions{Force: true}); err != nil {
 			log.Printf("Warning: Failed to remove OpenSearch container: %v", err)
+		}
+	}
+
+	// Clean up the network
+	networks, err := om.dockerCli.NetworkList(ctx, types.NetworkListOptions{})
+	if err == nil {
+		for _, network := range networks {
+			if network.Name == "opensearch-net" {
+				if err := om.dockerCli.NetworkRemove(ctx, network.ID); err != nil {
+					log.Printf("Warning: Failed to remove network: %v", err)
+				}
+				break
+			}
 		}
 	}
 
