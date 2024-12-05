@@ -2,14 +2,13 @@ package db
 
 import (
 	_ "embed"
-	"bufio"
 	"context"
 	"fmt"
 	"log"
 	"os"
 	"os/exec"
-	"strings"
 	"time"
+	"golang.org/x/term"
 )
 
 func init() {
@@ -59,15 +58,24 @@ func (qm *QuestDBManager) StartClient() error {
 		return fmt.Errorf("failed to open browser: %v", err)
 	}
 	
-	fmt.Println("\nPress 'q' and Enter to exit...")
-	reader := bufio.NewReader(os.Stdin)
+	fmt.Println("\nPress 'q' to exit...")
+	
+	// Get the current state of the terminal
+	oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
+	if err != nil {
+		return fmt.Errorf("failed to set terminal to raw mode: %v", err)
+	}
+	defer term.Restore(int(os.Stdin.Fd()), oldState)
+
+	buffer := make([]byte, 1)
 	for {
-		text, err := reader.ReadString('\n')
+		_, err := os.Stdin.Read(buffer)
 		if err != nil {
 			return fmt.Errorf("error reading input: %v", err)
 		}
 		
-		if strings.TrimSpace(text) == "q" {
+		if buffer[0] == 'q' {
+			fmt.Println() // Add newline after 'q'
 			log.Println("Shutting down...")
 			return nil
 		}
