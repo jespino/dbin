@@ -6,6 +6,9 @@ import (
 	"fmt"
 	"log"
 	"time"
+
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
 )
 
 func init() {
@@ -82,10 +85,10 @@ func (om *OpenSearchManager) Cleanup() error {
 
 	// Clean up both containers
 	if om.dashboardsContainerId != "" {
-		if err := om.dockerCli.ContainerStop(ctx, om.dashboardsContainerId, container.StopOptions{}); err != nil {
+		if err := om.dockerCli.ContainerStop(ctx, om.dashboardsContainerId, nil); err != nil {
 			log.Printf("Warning: Failed to stop Dashboards container: %v", err)
 		}
-		if err := om.dockerCli.ContainerRemove(ctx, om.dashboardsContainerId, container.RemoveOptions{Force: true}); err != nil {
+		if err := om.dockerCli.ContainerRemove(ctx, om.dashboardsContainerId, types.ContainerRemoveOptions{Force: true}); err != nil {
 			log.Printf("Warning: Failed to remove Dashboards container: %v", err)
 		}
 	}
