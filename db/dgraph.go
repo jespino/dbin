@@ -1,5 +1,13 @@
 package db
 
+// TODO: Dgraph implementation needs:
+// - Better network configuration between containers
+// - Proper health checks before starting each service
+// - Handle authentication/security settings
+// - Add volume mounts for data persistence
+// - Implement proper error handling for network creation/cleanup
+// - Add configuration options for memory/resources
+
 import (
 	"context"
 	_ "embed"
@@ -12,11 +20,14 @@ import (
 )
 
 func init() {
+	// TODO: Uncomment once implementation is stable
+	/*
 	Register(DatabaseInfo{
 		Name:        "dgraph",
 		Description: "Dgraph graph database",
 		Manager:     NewDgraphManager,
 	})
+	*/
 }
 
 type DgraphManager struct {
