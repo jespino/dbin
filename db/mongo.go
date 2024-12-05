@@ -38,7 +38,7 @@ func (mm *MongoManager) StartDatabase() error {
 		return err
 	}
 
-	if err := mm.CreateContainer(ctx, "mongo:latest", "mongo-db", "27017/tcp", nil, "/data/db"); err != nil {
+	if err := mm.CreateContainer(ctx, "mongo:latest", "mongo-db", "27017/tcp", nil, "/data/db", nil); err != nil {
 		return err
 	}
 

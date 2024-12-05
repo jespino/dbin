@@ -47,7 +47,7 @@ func (chm *ClickHouseManager) StartDatabase() error {
 		"CLICKHOUSE_PASSWORD=clickhouse",
 	}
 
-	if err := chm.CreateContainer(ctx, "clickhouse/clickhouse-server:latest", "clickhouse-db", "9000/tcp", env, "/var/lib/clickhouse"); err != nil {
+	if err := chm.CreateContainer(ctx, "clickhouse/clickhouse-server:latest", "clickhouse-db", "9000/tcp", env, "/var/lib/clickhouse", nil); err != nil {
 		return err
 	}
 

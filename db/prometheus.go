@@ -38,7 +38,7 @@ func (pm *PrometheusManager) StartDatabase() error {
 		return err
 	}
 
-	if err := pm.CreateContainer(ctx, "prom/prometheus:latest", "prometheus-db", "9090/tcp", nil, "/prometheus"); err != nil {
+	if err := pm.CreateContainer(ctx, "prom/prometheus:latest", "prometheus-db", "9090/tcp", nil, "/prometheus", nil); err != nil {
 		return err
 	}
 

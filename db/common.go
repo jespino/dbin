@@ -143,6 +143,7 @@ func (bm *BaseManager) CreateContainer(
 	port string,
 	env []string,
 	volumePath string,
+	cmd []string,
 ) error {
 	containerConfig := &container.Config{
 		Image: imageName,
@@ -150,6 +151,10 @@ func (bm *BaseManager) CreateContainer(
 		ExposedPorts: nat.PortSet{
 			nat.Port(port): struct{}{},
 		},
+	}
+	
+	if len(cmd) > 0 {
+		containerConfig.Cmd = cmd
 	}
 
 	hostConfig := &container.HostConfig{

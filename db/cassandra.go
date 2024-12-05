@@ -39,7 +39,7 @@ func (cm *CassandraManager) StartDatabase() error {
 		return err
 	}
 
-	if err := cm.CreateContainer(ctx, "cassandra:latest", "cassandra-db", "9042/tcp", nil, "/var/lib/cassandra"); err != nil {
+	if err := cm.CreateContainer(ctx, "cassandra:latest", "cassandra-db", "9042/tcp", nil, "/var/lib/cassandra", nil); err != nil {
 		return err
 	}
 
