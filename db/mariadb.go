@@ -22,8 +22,8 @@ type MariaDBManager struct {
 	*BaseManager
 }
 
-func NewMariaDBManager(dataDir string) DatabaseManager {
-	base, err := NewBaseManager(dataDir)
+func NewMariaDBManager(dataDir string, debug bool) DatabaseManager {
+	base, err := NewBaseManager(dataDir, debug)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to create base manager: %v", err))
 	}

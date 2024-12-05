@@ -20,8 +20,8 @@ type MongoManager struct {
 	*BaseManager
 }
 
-func NewMongoManager(dataDir string) DatabaseManager {
-	base, err := NewBaseManager(dataDir)
+func NewMongoManager(dataDir string, debug bool) DatabaseManager {
+	base, err := NewBaseManager(dataDir, debug)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to create base manager: %v", err))
 	}

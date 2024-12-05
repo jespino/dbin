@@ -20,8 +20,8 @@ type QuestDBManager struct {
 	*BaseManager
 }
 
-func NewQuestDBManager(dataDir string) DatabaseManager {
-	base, err := NewBaseManager(dataDir)
+func NewQuestDBManager(dataDir string, debug bool) DatabaseManager {
+	base, err := NewBaseManager(dataDir, debug)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to create base manager: %v", err))
 	}

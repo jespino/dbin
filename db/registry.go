@@ -5,7 +5,7 @@ import "fmt"
 type DatabaseInfo struct {
 	Name        string
 	Description string
-	Manager     func(string) DatabaseManager
+	Manager     func(string, bool) DatabaseManager
 }
 
 var registry = make(map[string]DatabaseInfo)

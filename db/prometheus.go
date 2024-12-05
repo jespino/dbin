@@ -20,8 +20,8 @@ type PrometheusManager struct {
 	*BaseManager
 }
 
-func NewPrometheusManager(dataDir string) DatabaseManager {
-	base, err := NewBaseManager(dataDir)
+func NewPrometheusManager(dataDir string, debug bool) DatabaseManager {
+	base, err := NewBaseManager(dataDir, debug)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to create base manager: %v", err))
 	}

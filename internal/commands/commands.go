@@ -35,7 +35,7 @@ func NewDatabaseCommand(config DBCommand) *cobra.Command {
 	return cmd
 }
 
-func run(createManager func(string) db.DatabaseManager, dataDir string, dbName string) error {
+func run(createManager func(string, bool) db.DatabaseManager, dataDir string, dbName string) error {
 	var absDataDir string
 	if dataDir != "./data" { // Only process if explicitly set
 		var err error
@@ -53,7 +53,7 @@ func run(createManager func(string) db.DatabaseManager, dataDir string, dbName s
 		log.Printf("Starting %s manager with ephemeral storage", dbName)
 	}
 
-	manager := createManager(absDataDir)
+	manager := createManager(absDataDir, debug)
 
 	log.Println("Initializing database...")
 	if err := manager.StartDatabase(); err != nil {
