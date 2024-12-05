@@ -130,7 +130,7 @@ func (om *OpenSearchManager) Cleanup() error {
 	networks, err := om.dockerCli.NetworkList(ctx, types.NetworkListOptions{})
 	if err == nil {
 		for _, network := range networks {
-			if network.Name == "opensearch-net" {
+			if network.Name == "dbin-opensearch-net" {
 				if err := om.dockerCli.NetworkRemove(ctx, network.ID); err != nil {
 					log.Printf("Warning: Failed to remove network: %v", err)
 				}
