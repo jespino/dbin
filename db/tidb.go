@@ -268,6 +268,18 @@ func (tm *TiDBManager) Cleanup() error {
 		tm.pdContainerId:   "PD",
 	}
 
+	// First disconnect all containers from the network
+	if tm.networkId != "" {
+		for id := range serviceContainers {
+			if id != "" {
+				if err := tm.dockerCli.NetworkDisconnect(ctx, tm.networkId, id, true); err != nil {
+					log.Printf("Warning: Failed to disconnect container from network: %v", err)
+				}
+			}
+		}
+	}
+
+	// Then stop and remove containers
 	for id, name := range serviceContainers {
 		if id != "" {
 			if err := tm.dockerCli.ContainerStop(ctx, id, container.StopOptions{}); err != nil {
@@ -281,6 +293,8 @@ func (tm *TiDBManager) Cleanup() error {
 
 	// Clean up the network last
 	if tm.networkId != "" {
+		// Give a small delay for network operations to complete
+		time.Sleep(2 * time.Second)
 		if err := tm.dockerCli.NetworkRemove(ctx, tm.networkId); err != nil {
 			log.Printf("Warning: Failed to remove network: %v", err)
 		}
