@@ -4,7 +4,9 @@ import (
 	_ "embed"
 	"context"
 	"fmt"
+	"io"
 	"log"
+	"os"
 	"time"
 
 	"github.com/docker/docker/api/types/container"
