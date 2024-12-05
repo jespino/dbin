@@ -2,10 +2,13 @@ package db
 
 import (
 	_ "embed"
+	"bufio"
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"os/exec"
+	"strings"
 	"time"
 )
 
@@ -56,8 +59,19 @@ func (qm *QuestDBManager) StartClient() error {
 		return fmt.Errorf("failed to open browser: %v", err)
 	}
 	
-	// Keep the container running
-	select {} // Block forever
+	fmt.Println("\nPress 'q' and Enter to exit...")
+	reader := bufio.NewReader(os.Stdin)
+	for {
+		text, err := reader.ReadString('\n')
+		if err != nil {
+			return fmt.Errorf("error reading input: %v", err)
+		}
+		
+		if strings.TrimSpace(text) == "q" {
+			log.Println("Shutting down...")
+			return nil
+		}
+	}
 }
 
 func (qm *QuestDBManager) Cleanup() error {
