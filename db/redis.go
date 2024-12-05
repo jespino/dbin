@@ -1,6 +1,7 @@
 package db
 
 import (
+	_ "embed"
 	"context"
 	"fmt"
 	"log"
@@ -8,6 +9,14 @@ import (
 	"os/exec"
 	"time"
 )
+
+func init() {
+	Register(DatabaseInfo{
+		Name:        "redis",
+		Description: "Redis database",
+		Manager:     NewRedisManager,
+	})
+}
 
 type RedisManager struct {
 	*BaseManager

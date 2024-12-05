@@ -1,6 +1,7 @@
 package db
 
 import (
+	_ "embed"
 	"context"
 	"database/sql"
 	"fmt"
@@ -11,6 +12,14 @@ import (
 
 	_ "github.com/lib/pq"
 )
+
+func init() {
+	Register(DatabaseInfo{
+		Name:        "postgres",
+		Description: "PostgreSQL database",
+		Manager:     NewPostgresManager,
+	})
+}
 
 type PostgresManager struct {
 	*BaseManager

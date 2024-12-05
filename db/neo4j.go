@@ -1,6 +1,7 @@
 package db
 
 import (
+	_ "embed"
 	"context"
 	"fmt"
 	"log"
@@ -8,6 +9,14 @@ import (
 	"os/exec"
 	"time"
 )
+
+func init() {
+	Register(DatabaseInfo{
+		Name:        "neo4j",
+		Description: "Neo4j database",
+		Manager:     NewNeo4jManager,
+	})
+}
 
 type Neo4jManager struct {
 	*BaseManager

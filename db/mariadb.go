@@ -1,6 +1,7 @@
 package db
 
 import (
+	_ "embed"
 	"context"
 	"database/sql"
 	"fmt"
@@ -11,6 +12,14 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 )
+
+func init() {
+	Register(DatabaseInfo{
+		Name:        "mariadb",
+		Description: "MariaDB database",
+		Manager:     NewMariaDBManager,
+	})
+}
 
 type MariaDBManager struct {
 	*BaseManager
