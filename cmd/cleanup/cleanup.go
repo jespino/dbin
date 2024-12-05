@@ -42,7 +42,62 @@ func cleanup() error {
 		return fmt.Errorf("failed to list containers: %v", err)
 	}
 
-	// Stop and remove containers with dbin- prefix
+	// List all networks
+	networks, err := cli.NetworkList(ctx, types.NetworkListOptions{})
+	if err != nil {
+		return fmt.Errorf("failed to list networks: %v", err)
+	}
+
+	// Collect items to be removed
+	var containersToRemove []string
+	var networksToRemove []string
+
+	for _, c := range containers {
+		for _, name := range c.Names {
+			if strings.HasPrefix(name, "/dbin-") {
+				containersToRemove = append(containersToRemove, name)
+			}
+		}
+	}
+
+	for _, network := range networks {
+		if strings.HasPrefix(network.Name, "dbin-") {
+			networksToRemove = append(networksToRemove, network.Name)
+		}
+	}
+
+	// Show confirmation prompt if there are items to remove
+	if len(containersToRemove) == 0 && len(networksToRemove) == 0 {
+		fmt.Println("No dbin containers or networks found to clean up.")
+		return nil
+	}
+
+	fmt.Println("The following items will be removed:")
+	
+	if len(containersToRemove) > 0 {
+		fmt.Println("\nContainers:")
+		for _, name := range containersToRemove {
+			fmt.Printf("  - %s\n", name[1:]) // Remove leading slash
+		}
+	}
+	
+	if len(networksToRemove) > 0 {
+		fmt.Println("\nNetworks:")
+		for _, name := range networksToRemove {
+			fmt.Printf("  - %s\n", name)
+		}
+	}
+
+	fmt.Print("\nDo you want to proceed? [y/N]: ")
+	var response string
+	fmt.Scanln(&response)
+
+	if response != "y" && response != "Y" {
+		fmt.Println("Cleanup cancelled.")
+		return nil
+	}
+
+	// Proceed with removal
 	for _, c := range containers {
 		for _, name := range c.Names {
 			if strings.HasPrefix(name, "/dbin-") {
@@ -63,6 +118,8 @@ func cleanup() error {
 	if err != nil {
 		return fmt.Errorf("failed to list networks: %v", err)
 	}
+
+	fmt.Println("\nCleaning up...")
 
 	// Remove networks with dbin- prefix
 	for _, network := range networks {
