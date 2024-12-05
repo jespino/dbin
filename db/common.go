@@ -209,9 +209,12 @@ func (bm *BaseManager) CreateContainer(
 					}
 					return
 				}
-				if n > 0 {
+				if n > 8 { // Only process if we have more than header bytes
 					// Skip the first 8 bytes which contain Docker log metadata
 					fmt.Print(string(buf[8:n]))
+				} else if n > 0 {
+					// If we have less than 8 bytes, just print everything
+					fmt.Print(string(buf[:n]))
 				}
 			}
 		}()
