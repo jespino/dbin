@@ -20,6 +20,7 @@ func NewCommand() *cobra.Command {
 			fmt.Println("- Neo4j (neo4j)")
 			fmt.Println("- MariaDB (mariadb)")
 			fmt.Println("- ClickHouse (clickhouse)")
+			fmt.Println("- QuestDB (questdb)")
 			return nil
 		},
 	}

@@ -3,6 +3,7 @@ package main
 import (
 	"dbin/cmd/cassandra"
 	"dbin/cmd/clickhouse"
+	"dbin/cmd/questdb"
 	"dbin/cmd/list"
 	"dbin/cmd/mariadb"
 	"dbin/cmd/mongo"
@@ -31,6 +32,7 @@ func main() {
 		neo4j.NewCommand(),
 		mariadb.NewCommand(),
 		clickhouse.NewCommand(),
+		questdb.NewCommand(),
 	)
 
 	if err := cmd.Execute(); err != nil {
