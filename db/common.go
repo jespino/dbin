@@ -187,6 +187,26 @@ func (bm *BaseManager) CreateContainer(
 	return nil
 }
 
+// StartContainerClient starts a client inside the container with retry logic
+func (bm *BaseManager) StartContainerClient(command string, args ...string) error {
+	for i := 0; i < 5; i++ {
+		cmd := exec.Command("docker", append([]string{"exec", "-it", bm.dbContainerId}, append([]string{command}, args...)...)...)
+		cmd.Stdin = os.Stdin
+		cmd.Stdout = os.Stdout
+		cmd.Stderr = os.Stderr
+		
+		if err := cmd.Run(); err == nil {
+			return nil
+		}
+		
+		if i < 4 { // Don't sleep after last attempt
+			log.Printf("Failed to connect, retrying in 5 seconds (attempt %d/5)...", i+1)
+			time.Sleep(5 * time.Second)
+		}
+	}
+	return fmt.Errorf("failed to connect after 5 attempts")
+}
+
 // Cleanup stops and removes the database container
 func (bm *BaseManager) Cleanup(ctx context.Context) error {
 	if bm.dbContainerId != "" {
