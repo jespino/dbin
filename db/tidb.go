@@ -161,7 +161,7 @@ func (tm *TiDBManager) StartClient() error {
 	// Create MySQL client container
 	clientConfig := &container.Config{
 		Image: "mysql:latest",
-		Cmd:   []string{"mysql", "-hhost.docker.internal", fmt.Sprintf("-P%s", tm.dbPort), "-uroot"},
+		Cmd:   []string{"mysql", "-hdbin-tidb", "-P4000", "-uroot"},
 		Tty:   true,
 		AttachStdin:  true,
 		AttachStdout: true,
@@ -170,7 +170,7 @@ func (tm *TiDBManager) StartClient() error {
 	}
 
 	hostConfig := &container.HostConfig{
-		NetworkMode: "host",
+		NetworkMode: container.NetworkMode("dbin-tidb-net"),
 	}
 
 	resp, err := tm.dockerCli.ContainerCreate(ctx, clientConfig, hostConfig, nil, nil, "dbin-tidb-client")
