@@ -16,7 +16,7 @@ import (
 type DBCommand struct {
 	Name        string
 	Description string
-	Manager     func(string) db.DatabaseManager
+	Manager     func(string, bool) db.DatabaseManager
 }
 
 func NewDatabaseCommand(config DBCommand) *cobra.Command {
@@ -27,7 +27,8 @@ func NewDatabaseCommand(config DBCommand) *cobra.Command {
 		Short: fmt.Sprintf("Start a %s instance", config.Description),
 		Long:  fmt.Sprintf("Start a %s instance in a Docker container with an interactive client", config.Description),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return run(config.Manager, dataDir, config.Description)
+			debug, _ := cmd.Flags().GetBool("debug")
+			return run(config.Manager, dataDir, config.Description, debug)
 		},
 	}
 
@@ -35,7 +36,7 @@ func NewDatabaseCommand(config DBCommand) *cobra.Command {
 	return cmd
 }
 
-func run(createManager func(string, bool) db.DatabaseManager, dataDir string, dbName string) error {
+func run(createManager func(string, bool) db.DatabaseManager, dataDir string, dbName string, debug bool) error {
 	var absDataDir string
 	if dataDir != "./data" { // Only process if explicitly set
 		var err error
