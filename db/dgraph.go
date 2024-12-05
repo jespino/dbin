@@ -86,7 +86,11 @@ func (dm *DgraphManager) StartDatabase() error {
 		return fmt.Errorf("failed to connect Alpha to network: %v", err)
 	}
 
-	// Start Ratel UI
+	// Pull and start Ratel UI
+	if err := dm.PullImageIfNeeded(ctx, "dgraph/ratel:latest"); err != nil {
+		return err
+	}
+
 	ratelEnv := []string{}
 	ratelCmd := []string{"/dgraph-ratel"}  // Full path to executable
 
