@@ -20,6 +20,7 @@ func init() {
 
 type OpenSearchManager struct {
 	*BaseManager
+	opensearchContainerId string
 	dashboardsContainerId string
 	dashboardsPort       string
 }
@@ -59,6 +60,7 @@ func (om *OpenSearchManager) StartDatabase() error {
 	if err := om.CreateContainer(ctx, "opensearchproject/opensearch:latest", "dbin-opensearch", "9200/tcp", env, "/usr/share/opensearch/data", nil); err != nil {
 		return err
 	}
+	om.opensearchContainerId = om.dbContainerId
 
 	// Wait for OpenSearch to be ready
 	time.Sleep(10 * time.Second)
@@ -73,6 +75,7 @@ func (om *OpenSearchManager) StartDatabase() error {
 	if err := om.CreateContainer(ctx, "opensearchproject/opensearch-dashboards:latest", "dbin-opensearch-dashboards", "5601/tcp", dashboardsEnv, "", nil); err != nil {
 		return err
 	}
+	om.dashboardsContainerId = om.dbContainerId
 
 	log.Printf("OpenSearch is ready on port %s and Dashboards is accessible on port %s\n", om.dbPort, om.dashboardsPort)
 	return nil
@@ -96,5 +99,14 @@ func (om *OpenSearchManager) Cleanup() error {
 		}
 	}
 
-	return om.BaseManager.Cleanup(ctx)
+	if om.opensearchContainerId != "" {
+		if err := om.dockerCli.ContainerStop(ctx, om.opensearchContainerId, container.StopOptions{}); err != nil {
+			log.Printf("Warning: Failed to stop OpenSearch container: %v", err)
+		}
+		if err := om.dockerCli.ContainerRemove(ctx, om.opensearchContainerId, container.RemoveOptions{Force: true}); err != nil {
+			log.Printf("Warning: Failed to remove OpenSearch container: %v", err)
+		}
+	}
+
+	return nil
 }
