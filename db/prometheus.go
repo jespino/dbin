@@ -44,8 +44,6 @@ func (pm *PrometheusManager) StartDatabase() error {
 	}
 	pm.dbContainerId = containerId
 	pm.dbPort = port
-		return err
-	}
 
 	log.Printf("Prometheus is ready and listening on port %s\n", pm.dbPort)
 	return nil

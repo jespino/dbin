@@ -52,8 +52,6 @@ func (pm *PostgresManager) StartDatabase() error {
 	}
 	pm.dbContainerId = containerId
 	pm.dbPort = port
-		return err
-	}
 
 	fmt.Println("Waiting for database to be ready...")
 	if err := pm.waitForDatabase(); err != nil {

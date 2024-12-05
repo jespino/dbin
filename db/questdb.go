@@ -44,8 +44,6 @@ func (qm *QuestDBManager) StartDatabase() error {
 	}
 	qm.dbContainerId = containerId
 	qm.dbPort = port
-		return err
-	}
 
 	log.Printf("QuestDB is ready and listening on port %s\n", qm.dbPort)
 	return nil

@@ -44,8 +44,6 @@ func (rm *RedisManager) StartDatabase() error {
 	}
 	rm.dbContainerId = containerId
 	rm.dbPort = port
-		return err
-	}
 
 	log.Printf("Redis is ready and listening on port %s\n", rm.dbPort)
 	return nil

@@ -49,8 +49,6 @@ func (sm *SurrealDBManager) StartDatabase() error {
 	}
 	sm.dbContainerId = containerId
 	sm.dbPort = port
-		return err
-	}
 
 	log.Printf("SurrealDB is ready and listening on port %s\n", sm.dbPort)
 	return nil

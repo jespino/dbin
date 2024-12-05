@@ -44,8 +44,6 @@ func (rm *RethinkDBManager) StartDatabase() error {
 	}
 	rm.dbContainerId = containerId
 	rm.dbPort = port
-		return err
-	}
 
 	log.Printf("RethinkDB is ready and listening on port %s\n", rm.dbPort)
 	return nil
