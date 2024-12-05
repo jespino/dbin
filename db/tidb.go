@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"os/exec"
 	"time"
 
 	"github.com/docker/docker/api/types/container"
