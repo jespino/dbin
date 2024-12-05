@@ -5,11 +5,7 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"net/http"
-	"os"
-	"os/exec"
 	"time"
-	"golang.org/x/term"
 )
 
 func init() {
