@@ -231,8 +231,24 @@ func (tm *TiDBManager) Cleanup() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	// Clean up all containers
-	containers := []struct {
+	// Clean up client container if it exists
+	containers, err := tm.dockerCli.ContainerList(ctx, container.ListOptions{All: true})
+	if err == nil {
+		for _, c := range containers {
+			if c.Names[0] == "/dbin-tidb-client" {
+				if err := tm.dockerCli.ContainerStop(ctx, c.ID, container.StopOptions{}); err != nil {
+					log.Printf("Warning: Failed to stop client container: %v", err)
+				}
+				if err := tm.dockerCli.ContainerRemove(ctx, c.ID, container.RemoveOptions{Force: true}); err != nil {
+					log.Printf("Warning: Failed to remove client container: %v", err)
+				}
+				break
+			}
+		}
+	}
+
+	// Clean up all service containers
+	containers = []struct {
 		id   string
 		name string
 	}{
@@ -252,7 +268,7 @@ func (tm *TiDBManager) Cleanup() error {
 		}
 	}
 
-	// Clean up the network
+	// Clean up the network last
 	if tm.networkId != "" {
 		if err := tm.dockerCli.NetworkRemove(ctx, tm.networkId); err != nil {
 			log.Printf("Warning: Failed to remove network: %v", err)
