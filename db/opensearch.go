@@ -70,6 +70,8 @@ func (om *OpenSearchManager) StartDatabase() error {
 		return err
 	}
 	om.opensearchContainerId = containerId
+	om.dbContainerId = containerId
+	om.dbPort = containerId
 
 	// Connect OpenSearch container to the network
 	if err := om.dockerCli.NetworkConnect(ctx, networkResponse.ID, om.opensearchContainerId, nil); err != nil {
@@ -86,13 +88,12 @@ func (om *OpenSearchManager) StartDatabase() error {
 	}
 
 	// Create OpenSearch Dashboards container with port 5601
-	containerId, port, err := om.CreateContainer(ctx, "opensearchproject/opensearch-dashboards:latest", "dbin-opensearch-dashboards", "5601/tcp", dashboardsEnv, "", nil)
+	containerId, port, err = om.CreateContainer(ctx, "opensearchproject/opensearch-dashboards:latest", "dbin-opensearch-dashboards", "5601/tcp", dashboardsEnv, "", nil)
 	if err != nil {
 		return err
 	}
-	om.dbContainerId = containerId
 	om.dashboardsPort = port
-	om.dashboardsContainerId = om.dbContainerId
+	om.dashboardsContainerId = containerId
 
 	// Connect Dashboards container to the network
 	if err := om.dockerCli.NetworkConnect(ctx, networkResponse.ID, om.dashboardsContainerId, nil); err != nil {
