@@ -25,7 +25,7 @@ type PostgresManager struct {
 	*BaseManager
 }
 
-func NewPostgresManager(dataDir string) *PostgresManager {
+func NewPostgresManager(dataDir string) DatabaseManager {
 	base, err := NewBaseManager(dataDir)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to create base manager: %v", err))

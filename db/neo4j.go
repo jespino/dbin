@@ -22,7 +22,7 @@ type Neo4jManager struct {
 	*BaseManager
 }
 
-func NewNeo4jManager(dataDir string) *Neo4jManager {
+func NewNeo4jManager(dataDir string) DatabaseManager {
 	base, err := NewBaseManager(dataDir)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to create base manager: %v", err))

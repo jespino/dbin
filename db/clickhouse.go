@@ -22,7 +22,7 @@ type ClickHouseManager struct {
 	*BaseManager
 }
 
-func NewClickHouseManager(dataDir string) *ClickHouseManager {
+func NewClickHouseManager(dataDir string) DatabaseManager {
 	base, err := NewBaseManager(dataDir)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to create base manager: %v", err))

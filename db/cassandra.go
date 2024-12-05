@@ -22,7 +22,7 @@ type CassandraManager struct {
 	*BaseManager
 }
 
-func NewCassandraManager(dataDir string) *CassandraManager {
+func NewCassandraManager(dataDir string) DatabaseManager {
 	base, err := NewBaseManager(dataDir)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to create base manager: %v", err))

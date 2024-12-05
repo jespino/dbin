@@ -22,7 +22,7 @@ type RedisManager struct {
 	*BaseManager
 }
 
-func NewRedisManager(dataDir string) *RedisManager {
+func NewRedisManager(dataDir string) DatabaseManager {
 	base, err := NewBaseManager(dataDir)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to create base manager: %v", err))
