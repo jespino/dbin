@@ -44,10 +44,11 @@ type BaseManager struct {
 	dockerCli     *client.Client
 	dbContainerId string
 	dbPort        string
+	debug         bool
 }
 
 // NewBaseManager creates a new base manager with Docker client
-func NewBaseManager(dataDir string) (*BaseManager, error) {
+func NewBaseManager(dataDir string, debug bool) (*BaseManager, error) {
 	cli, err := client.NewClientWithOpts(
 		client.FromEnv,
 		client.WithVersion("1.46"),
@@ -59,6 +60,7 @@ func NewBaseManager(dataDir string) (*BaseManager, error) {
 	return &BaseManager{
 		dataDir:   dataDir,
 		dockerCli: cli,
+		debug:     debug,
 	}, nil
 }
 
@@ -179,6 +181,36 @@ func (bm *BaseManager) CreateContainer(
 		return fmt.Errorf("failed to start container: %v", err)
 	}
 	log.Println("Container started successfully")
+
+	if bm.debug {
+		go func() {
+			reader, err := bm.dockerCli.ContainerLogs(ctx, bm.dbContainerId, container.LogsOptions{
+				ShowStdout: true,
+				ShowStderr: true,
+				Follow:     true,
+			})
+			if err != nil {
+				log.Printf("Warning: Failed to get container logs: %v", err)
+				return
+			}
+			defer reader.Close()
+
+			buf := make([]byte, 1024)
+			for {
+				n, err := reader.Read(buf)
+				if err != nil {
+					if err != io.EOF {
+						log.Printf("Warning: Error reading container logs: %v", err)
+					}
+					return
+				}
+				if n > 0 {
+					// Skip the first 8 bytes which contain Docker log metadata
+					fmt.Print(string(buf[8:n]))
+				}
+			}
+		}()
+	}
 
 	// Get the assigned port
 	inspect, err := bm.dockerCli.ContainerInspect(ctx, bm.dbContainerId)

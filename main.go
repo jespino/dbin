@@ -10,12 +10,16 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var debug bool
+
 func main() {
 	cmd := &cobra.Command{
 		Use:   "dbin",
 		Short: "Database management tools",
 		Long:  `A collection of tools for managing databases in containers`,
 	}
+
+	cmd.PersistentFlags().BoolVarP(&debug, "debug", "d", false, "Enable debug output")
 
 	cmd.AddCommand(list.NewCommand())
 	cmd.AddCommand(commands.CreateCommands(db.GetAllDatabases())...)

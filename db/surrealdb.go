@@ -21,7 +21,7 @@ type SurrealDBManager struct {
 }
 
 func NewSurrealDBManager(dataDir string) DatabaseManager {
-	base, err := NewBaseManager(dataDir)
+	base, err := NewBaseManager(dataDir, debug)
 	if err != nil {
 		panic(fmt.Sprintf("Failed to create base manager: %v", err))
 	}
