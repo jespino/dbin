@@ -116,7 +116,7 @@ func cleanup() error {
 	}
 
 	// List all networks
-	networks, err := cli.NetworkList(ctx, types.NetworkListOptions{})
+	networks, err = cli.NetworkList(ctx, types.NetworkListOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to list networks: %v", err)
 	}
