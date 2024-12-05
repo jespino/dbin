@@ -42,7 +42,7 @@ func (nm *Neo4jManager) StartDatabase() error {
 		"NEO4J_AUTH=neo4j/password",
 	}
 
-	if err := nm.CreateContainer(ctx, "neo4j:latest", "neo4j-db", "7687/tcp", env, "/data", nil); err != nil {
+	if err := nm.CreateContainer(ctx, "neo4j:latest", "dbin-neo4j", "7687/tcp", env, "/data", nil); err != nil {
 		return err
 	}
 

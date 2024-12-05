@@ -45,7 +45,7 @@ func (mm *MariaDBManager) StartDatabase() error {
 		"MYSQL_DATABASE=test",
 	}
 
-	if err := mm.CreateContainer(ctx, "mariadb:latest", "mariadb-db", "3306/tcp", env, "/var/lib/mysql", nil); err != nil {
+	if err := mm.CreateContainer(ctx, "mariadb:latest", "dbin-mariadb", "3306/tcp", env, "/var/lib/mysql", nil); err != nil {
 		return err
 	}
 

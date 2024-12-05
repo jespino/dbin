@@ -38,7 +38,7 @@ func (rm *RethinkDBManager) StartDatabase() error {
 		return err
 	}
 
-	if err := rm.CreateContainer(ctx, "rethinkdb:latest", "rethinkdb-db", "8080/tcp", nil, "/data", nil); err != nil {
+	if err := rm.CreateContainer(ctx, "rethinkdb:latest", "dbin-rethinkdb", "8080/tcp", nil, "/data", nil); err != nil {
 		return err
 	}
 
