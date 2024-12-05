@@ -49,7 +49,7 @@ func (om *OpenSearchManager) StartDatabase() error {
 	}
 
 	// Create a dedicated network for OpenSearch containers
-	networkName := "opensearch-net"
+	networkName := "dbin-opensearch-net"
 	networkResponse, err := om.dockerCli.NetworkCreate(ctx, networkName, types.NetworkCreate{})
 	if err != nil {
 		return fmt.Errorf("failed to create network: %v", err)
