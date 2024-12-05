@@ -24,6 +24,7 @@ type DgraphManager struct {
 	zeroContainerId  string
 	alphaContainerId string
 	ratelPort        string
+	alphaPort        string
 }
 
 func NewDgraphManager(dataDir string, debug bool) DatabaseManager {
@@ -71,7 +72,7 @@ func (dm *DgraphManager) StartDatabase() error {
 
 	// Start Dgraph Alpha
 	alphaEnv := []string{}
-	alphaCmd := []string{"dgraph", "alpha", "--my=alpha:7080", "--zero=zero:5080", "--security=whitelist", "--whitelist=0.0.0.0/0"}
+	alphaCmd := []string{"dgraph", "alpha", "--my=alpha:7080", "--zero=zero:5080", "--security", "whitelist=0.0.0.0/0"}
 
 	containerId, port, err := dm.CreateContainer(ctx, "dgraph/dgraph:latest", "dbin-dgraph-alpha", "8080/tcp", alphaEnv, "/dgraph", alphaCmd)
 	if err != nil {
@@ -79,7 +80,7 @@ func (dm *DgraphManager) StartDatabase() error {
 	}
 	dm.alphaContainerId = containerId
 	dm.dbContainerId = containerId // Set this for base manager compatibility
-	dm.dbPort = port
+	dm.alphaPort = port
 
 	// Connect Alpha container to the network
 	if err := dm.dockerCli.NetworkConnect(ctx, networkResponse.ID, dm.alphaContainerId, nil); err != nil {
@@ -91,9 +92,7 @@ func (dm *DgraphManager) StartDatabase() error {
 		return err
 	}
 
-	ratelEnv := []string{
-		"DGRAPH_ENDPOINT=http://dbin-dgraph-alpha:8080",
-	}
+	ratelEnv := []string{}
 	ratelCmd := []string{"/usr/local/bin/dgraph-ratel"} // Correct path to executable
 
 	containerId, port, err = dm.CreateContainer(ctx, "dgraph/ratel:latest", "dbin-dgraph-ratel", "8000/tcp", ratelEnv, "", ratelCmd)
@@ -102,7 +101,7 @@ func (dm *DgraphManager) StartDatabase() error {
 	}
 	dm.ratelPort = port
 
-	log.Printf("Dgraph is ready! GraphQL endpoint on port %s, Ratel UI on port %s\n", dm.dbPort, dm.ratelPort)
+	log.Printf("Dgraph is ready! GraphQL endpoint on port %s, Ratel UI on port %s\n", dm.alphaPort, dm.ratelPort)
 	return nil
 }
 
