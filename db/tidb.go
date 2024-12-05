@@ -149,7 +149,70 @@ func (tm *TiDBManager) StartDatabase() error {
 }
 
 func (tm *TiDBManager) StartClient() error {
-	return tm.StartContainerClient("mysql", "-h127.0.0.1", "-P4000", "-uroot")
+	ctx := context.Background()
+
+	// Pull MySQL client image if needed
+	if err := tm.PullImageIfNeeded(ctx, "mysql:latest"); err != nil {
+		return err
+	}
+
+	// Create MySQL client container
+	clientConfig := &container.Config{
+		Image: "mysql:latest",
+		Cmd:   []string{"mysql", "-hhost.docker.internal", fmt.Sprintf("-P%s", tm.dbPort), "-uroot"},
+		Tty:   true,
+		AttachStdin:  true,
+		AttachStdout: true,
+		AttachStderr: true,
+		OpenStdin:    true,
+	}
+
+	hostConfig := &container.HostConfig{
+		NetworkMode: "host",
+	}
+
+	resp, err := tm.dockerCli.ContainerCreate(ctx, clientConfig, hostConfig, nil, nil, "dbin-tidb-client")
+	if err != nil {
+		return fmt.Errorf("failed to create client container: %v", err)
+	}
+
+	if err := tm.dockerCli.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
+		return fmt.Errorf("failed to start client container: %v", err)
+	}
+
+	// Attach to the container
+	waiter, err := tm.dockerCli.ContainerAttach(ctx, resp.ID, container.AttachOptions{
+		Stream: true,
+		Stdin:  true,
+		Stdout: true,
+		Stderr: true,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to attach to client container: %v", err)
+	}
+	defer waiter.Close()
+
+	// Handle interactive session
+	go io.Copy(os.Stdout, waiter.Reader)
+	go io.Copy(os.Stderr, waiter.Reader)
+	go io.Copy(waiter.Conn, os.Stdin)
+
+	// Wait for container to exit
+	statusCh, errCh := tm.dockerCli.ContainerWait(ctx, resp.ID, container.WaitConditionNotRunning)
+	select {
+	case err := <-errCh:
+		if err != nil {
+			return fmt.Errorf("error waiting for client container: %v", err)
+		}
+	case <-statusCh:
+	}
+
+	// Clean up client container
+	if err := tm.dockerCli.ContainerRemove(ctx, resp.ID, container.RemoveOptions{Force: true}); err != nil {
+		log.Printf("Warning: Failed to remove client container: %v", err)
+	}
+
+	return nil
 }
 
 func (tm *TiDBManager) Cleanup() error {
