@@ -36,13 +36,15 @@ func cleanup() error {
 		return fmt.Errorf("failed to create Docker client: %v", err)
 	}
 
+	var networks []types.NetworkResource
+
 	// List all containers
 	containers, err := cli.ContainerList(ctx, container.ListOptions{All: true})
 	if err != nil {
 		return fmt.Errorf("failed to list containers: %v", err)
 	}
 
-	// List all networks
+	// List all networks initially
 	networks, err = cli.NetworkList(ctx, types.NetworkListOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to list networks: %v", err)
