@@ -38,7 +38,7 @@ func (rm *RedisManager) StartDatabase() error {
 		return err
 	}
 
-	if err := rm.CreateContainer(ctx, "redis:latest", "redis-db", "6379/tcp", nil, "/data"); err != nil {
+	if err := rm.CreateContainer(ctx, "redis:latest", "redis-db", "6379/tcp", nil, "/data", nil); err != nil {
 		return err
 	}
 
