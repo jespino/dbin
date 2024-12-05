@@ -43,7 +43,12 @@ func (sm *SurrealDBManager) StartDatabase() error {
 		"SURREAL_PASS=root",
 	}
 
-	if err := sm.CreateContainer(ctx, "surrealdb/surrealdb:latest", "dbin-surrealdb", "8000/tcp", env, "/data", []string{"start", "--user", "root", "--pass", "root"}); err != nil {
+	containerId, port, err := sm.CreateContainer(ctx, "surrealdb/surrealdb:latest", "dbin-surrealdb", "8000/tcp", env, "/data", []string{"start", "--user", "root", "--pass", "root"})
+	if err != nil {
+		return err
+	}
+	sm.dbContainerId = containerId
+	sm.dbPort = port
 		return err
 	}
 

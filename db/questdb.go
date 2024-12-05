@@ -38,7 +38,12 @@ func (qm *QuestDBManager) StartDatabase() error {
 		return err
 	}
 
-	if err := qm.CreateContainer(ctx, "questdb/questdb:latest", "dbin-questdb", "9000/tcp", nil, "/root/.questdb", nil); err != nil {
+	containerId, port, err := qm.CreateContainer(ctx, "questdb/questdb:latest", "dbin-questdb", "9000/tcp", nil, "/root/.questdb", nil)
+	if err != nil {
+		return err
+	}
+	qm.dbContainerId = containerId
+	qm.dbPort = port
 		return err
 	}
 

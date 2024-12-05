@@ -46,7 +46,12 @@ func (pm *PostgresManager) StartDatabase() error {
 		"POSTGRES_DB=postgres",
 	}
 
-	if err := pm.CreateContainer(ctx, "postgres:latest", "dbin-postgres", "5432/tcp", env, "/var/lib/postgresql/data", nil); err != nil {
+	containerId, port, err := pm.CreateContainer(ctx, "postgres:latest", "dbin-postgres", "5432/tcp", env, "/var/lib/postgresql/data", nil)
+	if err != nil {
+		return err
+	}
+	pm.dbContainerId = containerId
+	pm.dbPort = port
 		return err
 	}
 
