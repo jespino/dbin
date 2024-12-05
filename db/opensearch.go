@@ -42,6 +42,10 @@ func (om *OpenSearchManager) StartDatabase() error {
 		return err
 	}
 
+	if err := om.PullImageIfNeeded(ctx, "opensearchproject/opensearch-dashboards:latest"); err != nil {
+		return err
+	}
+
 	// Start OpenSearch container first
 	env := []string{
 		"discovery.type=single-node",
