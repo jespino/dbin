@@ -71,7 +71,7 @@ func (om *OpenSearchManager) StartDatabase() error {
 	}
 	om.opensearchContainerId = containerId
 	om.dbContainerId = containerId
-	om.dbPort = containerId
+	om.dbPort = port
 
 	// Connect OpenSearch container to the network
 	if err := om.dockerCli.NetworkConnect(ctx, networkResponse.ID, om.opensearchContainerId, nil); err != nil {
