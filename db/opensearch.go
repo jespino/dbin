@@ -1,14 +1,14 @@
 package db
 
 import (
-	_ "embed"
 	"context"
+	_ "embed"
 	"fmt"
 	"log"
 	"time"
 
-	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/network"
 )
 
 func init() {
@@ -23,7 +23,7 @@ type OpenSearchManager struct {
 	*BaseManager
 	opensearchContainerId string
 	dashboardsContainerId string
-	dashboardsPort       string
+	dashboardsPort        string
 }
 
 func NewOpenSearchManager(dataDir string, debug bool) DatabaseManager {
@@ -50,7 +50,7 @@ func (om *OpenSearchManager) StartDatabase() error {
 
 	// Create a dedicated network for OpenSearch containers
 	networkName := "dbin-opensearch-net"
-	networkResponse, err := om.dockerCli.NetworkCreate(ctx, networkName, types.NetworkCreate{})
+	networkResponse, err := om.dockerCli.NetworkCreate(ctx, networkName, network.CreateOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to create network: %v", err)
 	}
@@ -127,7 +127,7 @@ func (om *OpenSearchManager) Cleanup() error {
 	}
 
 	// Clean up the network
-	networks, err := om.dockerCli.NetworkList(ctx, types.NetworkListOptions{})
+	networks, err := om.dockerCli.NetworkList(ctx, network.ListOptions{})
 	if err == nil {
 		for _, network := range networks {
 			if network.Name == "dbin-opensearch-net" {
