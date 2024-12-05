@@ -78,7 +78,7 @@ func (dm *DgraphManager) StartDatabase() error {
 		return err
 	}
 	dm.alphaContainerId = containerId
-	dm.dbContainerId = containerId  // Set this for base manager compatibility
+	dm.dbContainerId = containerId // Set this for base manager compatibility
 	dm.dbPort = port
 
 	// Connect Alpha container to the network
@@ -91,8 +91,10 @@ func (dm *DgraphManager) StartDatabase() error {
 		return err
 	}
 
-	ratelEnv := []string{}
-	ratelCmd := []string{"/usr/local/bin/dgraph-ratel"}  // Correct path to executable
+	ratelEnv := []string{
+		"DGRAPH_ENDPOINT=	dbin-dgraph-alpha:8080",
+	}
+	ratelCmd := []string{"/usr/local/bin/dgraph-ratel"} // Correct path to executable
 
 	containerId, port, err = dm.CreateContainer(ctx, "dgraph/ratel:latest", "dbin-dgraph-ratel", "8000/tcp", ratelEnv, "", ratelCmd)
 	if err != nil {
