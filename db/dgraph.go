@@ -88,9 +88,9 @@ func (dm *DgraphManager) StartDatabase() error {
 
 	// Start Ratel UI
 	ratelEnv := []string{}
-	ratelCmd := []string{"dgraph-ratel"}
+	ratelCmd := []string{"/dgraph-ratel"}  // Full path to executable
 
-	containerId, port, err = dm.CreateContainer(ctx, "dgraph/dgraph:latest", "dbin-dgraph-ratel", "8000/tcp", ratelEnv, "", ratelCmd)
+	containerId, port, err = dm.CreateContainer(ctx, "dgraph/ratel:latest", "dbin-dgraph-ratel", "8000/tcp", ratelEnv, "", ratelCmd)
 	if err != nil {
 		return err
 	}
