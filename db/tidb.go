@@ -190,7 +190,7 @@ func (tm *TiDBManager) StartClient() error {
 	log.Println("Waiting for TiDB to be ready...")
 	for i := 0; i < 30; i++ {
 		log.Printf("Checking TiDB status (attempt %d/30)...\n", i+1)
-		cmd := exec.Command("docker", "exec", resp.ID, "mysql", "-h127.0.0.1", "-P4000", "-uroot", "--connect-timeout=5", "-e", "SELECT 1")
+		cmd := exec.Command("docker", "exec", resp.ID, "mysql", "-hdbin-tidb", "-P4000", "-uroot", "--connect-timeout=5", "-e", "SELECT 1")
 		if err := cmd.Run(); err == nil {
 			log.Printf("TiDB is ready and listening on port %s\n", tm.dbPort)
 			return nil
