@@ -176,14 +176,14 @@ func (bm *BaseManager) CreateContainer(
 
 	resp, err := bm.dockerCli.ContainerCreate(ctx, containerConfig, hostConfig, nil, nil, containerName)
 	if err != nil {
-		return fmt.Errorf("failed to create container: %v", err)
+		return "", "", fmt.Errorf("failed to create container: %v", err)
 	}
 
 	bm.dbContainerId = resp.ID
 
 	log.Println("Starting container...")
 	if err := bm.dockerCli.ContainerStart(ctx, bm.dbContainerId, container.StartOptions{}); err != nil {
-		return fmt.Errorf("failed to start container: %v", err)
+		return "", "", fmt.Errorf("failed to start container: %v", err)
 	}
 	log.Println("Container started successfully")
 
@@ -220,7 +220,7 @@ func (bm *BaseManager) CreateContainer(
 	// Get the assigned port
 	inspect, err := bm.dockerCli.ContainerInspect(ctx, bm.dbContainerId)
 	if err != nil {
-		return fmt.Errorf("failed to inspect container: %v", err)
+		return "", "", fmt.Errorf("failed to inspect container: %v", err)
 	}
 
 	bm.dbPort = inspect.NetworkSettings.Ports[nat.Port(port)][0].HostPort

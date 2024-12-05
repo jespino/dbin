@@ -135,7 +135,7 @@ func (tm *TiDBManager) StartDatabase() error {
 	time.Sleep(5 * time.Second)
 
 	// Start TiDB
-	containerId, port, err := tm.CreateContainer(ctx, "pingcap/tidb:latest", "dbin-tidb", "4000/tcp", nil, "", []string{
+	containerId, _, err := tm.CreateContainer(ctx, "pingcap/tidb:latest", "dbin-tidb", "4000/tcp", nil, "", []string{
 		"--store=tikv",
 		"--path=dbin-pd:2379",
 	})
