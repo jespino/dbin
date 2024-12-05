@@ -135,12 +135,14 @@ func (tm *TiDBManager) StartDatabase() error {
 	time.Sleep(5 * time.Second)
 
 	// Start TiDB
-	if err := tm.CreateContainer(ctx, "pingcap/tidb:latest", "dbin-tidb", "4000/tcp", nil, "", []string{
+	containerId, port, err := tm.CreateContainer(ctx, "pingcap/tidb:latest", "dbin-tidb", "4000/tcp", nil, "", []string{
 		"--store=tikv",
 		"--path=dbin-pd:2379",
-	}); err != nil {
+	})
+	if err != nil {
 		return err
 	}
+	tm.dbContainerId = containerId
 
 	// Connect TiDB to the network
 	if err := tm.dockerCli.NetworkConnect(ctx, tm.networkId, tm.dbContainerId, nil); err != nil {

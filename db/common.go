@@ -144,7 +144,7 @@ func (bm *BaseManager) CreateContainer(
 	env []string,
 	volumePath string,
 	cmd []string,
-) error {
+) (string, string, error) {
 	containerConfig := &container.Config{
 		Image: imageName,
 		Env:   env,
@@ -224,7 +224,7 @@ func (bm *BaseManager) CreateContainer(
 	}
 
 	bm.dbPort = inspect.NetworkSettings.Ports[nat.Port(port)][0].HostPort
-	return nil
+	return resp.ID, bm.dbPort, nil
 }
 
 // StartContainerClient starts a client inside the container with retry logic

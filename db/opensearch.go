@@ -65,10 +65,11 @@ func (om *OpenSearchManager) StartDatabase() error {
 	}
 
 	// Create OpenSearch container with its native port
-	if err := om.CreateContainer(ctx, "opensearchproject/opensearch:latest", "dbin-opensearch", "9200/tcp", env, "/usr/share/opensearch/data", nil); err != nil {
+	containerId, port, err := om.CreateContainer(ctx, "opensearchproject/opensearch:latest", "dbin-opensearch", "9200/tcp", env, "/usr/share/opensearch/data", nil)
+	if err != nil {
 		return err
 	}
-	om.opensearchContainerId = om.dbContainerId
+	om.opensearchContainerId = containerId
 
 	// Connect OpenSearch container to the network
 	if err := om.dockerCli.NetworkConnect(ctx, networkResponse.ID, om.opensearchContainerId, nil); err != nil {
