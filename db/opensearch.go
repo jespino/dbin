@@ -45,7 +45,7 @@ func (om *OpenSearchManager) StartDatabase() error {
 		"DISABLE_SECURITY_PLUGIN=true",
 	}
 
-	if err := om.CreateContainer(ctx, "opensearchproject/opensearch:latest", "dbin-opensearch", "9200/tcp", env, "/usr/share/opensearch/data", nil); err != nil {
+	if err := om.CreateContainer(ctx, "opensearchproject/opensearch:latest", "dbin-opensearch", "5601/tcp", env, "/usr/share/opensearch/data", nil); err != nil {
 		return err
 	}
 
