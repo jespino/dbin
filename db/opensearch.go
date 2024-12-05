@@ -86,9 +86,12 @@ func (om *OpenSearchManager) StartDatabase() error {
 	}
 
 	// Create OpenSearch Dashboards container with port 5601
-	if err := om.CreateContainer(ctx, "opensearchproject/opensearch-dashboards:latest", "dbin-opensearch-dashboards", "5601/tcp", dashboardsEnv, "", nil); err != nil {
+	containerId, port, err := om.CreateContainer(ctx, "opensearchproject/opensearch-dashboards:latest", "dbin-opensearch-dashboards", "5601/tcp", dashboardsEnv, "", nil)
+	if err != nil {
 		return err
 	}
+	om.dbContainerId = containerId
+	om.dashboardsPort = port
 	om.dashboardsContainerId = om.dbContainerId
 
 	// Connect Dashboards container to the network

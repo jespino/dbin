@@ -42,9 +42,12 @@ func (nm *Neo4jManager) StartDatabase() error {
 		"NEO4J_AUTH=neo4j/password",
 	}
 
-	if err := nm.CreateContainer(ctx, "neo4j:latest", "dbin-neo4j", "7687/tcp", env, "/data", nil); err != nil {
+	containerId, port, err := nm.CreateContainer(ctx, "neo4j:latest", "dbin-neo4j", "7687/tcp", env, "/data", nil)
+	if err != nil {
 		return err
 	}
+	nm.dbContainerId = containerId
+	nm.dbPort = port
 
 	log.Printf("Neo4j is ready and listening on port %s\n", nm.dbPort)
 	return nil

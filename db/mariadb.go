@@ -45,9 +45,12 @@ func (mm *MariaDBManager) StartDatabase() error {
 		"MYSQL_DATABASE=test",
 	}
 
-	if err := mm.CreateContainer(ctx, "mariadb:latest", "dbin-mariadb", "3306/tcp", env, "/var/lib/mysql", nil); err != nil {
+	containerId, port, err := mm.CreateContainer(ctx, "mariadb:latest", "dbin-mariadb", "3306/tcp", env, "/var/lib/mysql", nil)
+	if err != nil {
 		return err
 	}
+	mm.dbContainerId = containerId
+	mm.dbPort = port
 
 	fmt.Println("Waiting for database to be ready...")
 	if err := mm.waitForDatabase(); err != nil {

@@ -38,9 +38,12 @@ func (mm *MongoManager) StartDatabase() error {
 		return err
 	}
 
-	if err := mm.CreateContainer(ctx, "mongo:latest", "dbin-mongo", "27017/tcp", nil, "/data/db", nil); err != nil {
+	containerId, port, err := mm.CreateContainer(ctx, "mongo:latest", "dbin-mongo", "27017/tcp", nil, "/data/db", nil)
+	if err != nil {
 		return err
 	}
+	mm.dbContainerId = containerId
+	mm.dbPort = port
 
 	log.Printf("MongoDB is ready and listening on port %s\n", mm.dbPort)
 	return nil

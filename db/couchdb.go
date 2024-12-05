@@ -43,9 +43,12 @@ func (cm *CouchDBManager) StartDatabase() error {
 		"COUCHDB_PASSWORD=password",
 	}
 
-	if err := cm.CreateContainer(ctx, "couchdb:latest", "dbin-couchdb", "5984/tcp", env, "/opt/couchdb/data", nil); err != nil {
+	containerId, port, err := cm.CreateContainer(ctx, "couchdb:latest", "dbin-couchdb", "5984/tcp", env, "/opt/couchdb/data", nil)
+	if err != nil {
 		return err
 	}
+	cm.dbContainerId = containerId
+	cm.dbPort = port
 
 	log.Printf("CouchDB is ready and listening on port %s\n", cm.dbPort)
 	return nil

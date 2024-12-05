@@ -47,9 +47,12 @@ func (chm *ClickHouseManager) StartDatabase() error {
 		"CLICKHOUSE_PASSWORD=clickhouse",
 	}
 
-	if err := chm.CreateContainer(ctx, "clickhouse/clickhouse-server:latest", "dbin-clickhouse", "9000/tcp", env, "/var/lib/clickhouse", nil); err != nil {
+	containerId, port, err := chm.CreateContainer(ctx, "clickhouse/clickhouse-server:latest", "dbin-clickhouse", "9000/tcp", env, "/var/lib/clickhouse", nil)
+	if err != nil {
 		return err
 	}
+	chm.dbContainerId = containerId
+	chm.dbPort = port
 
 	log.Printf("ClickHouse is ready and listening on port %s\n", chm.dbPort)
 	return nil

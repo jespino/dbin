@@ -39,9 +39,12 @@ func (cm *CassandraManager) StartDatabase() error {
 		return err
 	}
 
-	if err := cm.CreateContainer(ctx, "cassandra:latest", "dbin-cassandra", "9042/tcp", nil, "/var/lib/cassandra", nil); err != nil {
+	containerId, port, err := cm.CreateContainer(ctx, "cassandra:latest", "dbin-cassandra", "9042/tcp", nil, "/var/lib/cassandra", nil)
+	if err != nil {
 		return err
 	}
+	cm.dbContainerId = containerId
+	cm.dbPort = port
 
 	// Wait for Cassandra to be ready
 	log.Println("Waiting for Cassandra to be ready...")
