@@ -5,9 +5,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
-	"os"
-	"os/exec"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
