@@ -92,7 +92,7 @@ func (dm *DgraphManager) StartDatabase() error {
 	}
 
 	ratelEnv := []string{
-		"DGRAPH_ENDPOINT=	dbin-dgraph-alpha:8080",
+		"DGRAPH_ENDPOINT=http://dbin-dgraph-alpha:8080",
 	}
 	ratelCmd := []string{"/usr/local/bin/dgraph-ratel"} // Correct path to executable
 
@@ -114,8 +114,8 @@ func (dm *DgraphManager) Cleanup() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	// Clean up all containers
-	containers := []string{dm.alphaContainerId, dm.zeroContainerId}
+	// Clean up all containers (Alpha, Zero, and Ratel)
+	containers := []string{dm.alphaContainerId, dm.zeroContainerId, "dbin-dgraph-ratel"}
 	for _, id := range containers {
 		if id != "" {
 			if err := dm.dockerCli.ContainerStop(ctx, id, container.StopOptions{}); err != nil {
