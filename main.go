@@ -1,6 +1,7 @@
 package main
 
 import (
+	"dbin/cmd/cleanup"
 	"dbin/cmd/list"
 	"dbin/db"
 	"dbin/internal/commands"
@@ -22,6 +23,7 @@ func main() {
 	cmd.PersistentFlags().BoolVarP(&debug, "debug", "d", false, "Enable debug output")
 
 	cmd.AddCommand(list.NewCommand())
+	cmd.AddCommand(cleanup.NewCommand())
 	cmd.AddCommand(commands.CreateCommands(db.GetAllDatabases())...)
 
 	if err := cmd.Execute(); err != nil {
