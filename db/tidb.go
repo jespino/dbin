@@ -148,9 +148,18 @@ func (tm *TiDBManager) StartDatabase() error {
 
 	// Wait for TiDB to be ready
 	log.Println("Waiting for TiDB to be ready...")
-	time.Sleep(10 * time.Second)
-
-	log.Printf("TiDB is ready and listening on port %s\n", tm.dbPort)
+	for i := 0; i < 30; i++ {
+		log.Printf("Checking TiDB status (attempt %d/30)...\n", i+1)
+		cmd := exec.Command("docker", "exec", tm.dbContainerId, "mysql", "-h127.0.0.1", "-P4000", "-uroot", "--connect-timeout=5", "-e", "SELECT 1")
+		if err := cmd.Run(); err == nil {
+			log.Printf("TiDB is ready and listening on port %s\n", tm.dbPort)
+			return nil
+		}
+		if i < 29 {
+			time.Sleep(2 * time.Second)
+		}
+	}
+	return fmt.Errorf("timeout waiting for TiDB to be ready")
 	return nil
 }
 
