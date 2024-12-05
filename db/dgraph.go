@@ -92,7 +92,7 @@ func (dm *DgraphManager) StartDatabase() error {
 	}
 
 	ratelEnv := []string{}
-	ratelCmd := []string{"/dgraph-ratel"}  // Full path to executable
+	ratelCmd := []string{"/usr/local/bin/dgraph-ratel"}  // Correct path to executable
 
 	containerId, port, err = dm.CreateContainer(ctx, "dgraph/ratel:latest", "dbin-dgraph-ratel", "8000/tcp", ratelEnv, "", ratelCmd)
 	if err != nil {
