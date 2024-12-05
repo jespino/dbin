@@ -248,22 +248,19 @@ func (tm *TiDBManager) Cleanup() error {
 	}
 
 	// Clean up all service containers
-	containers = []struct {
-		id   string
-		name string
-	}{
-		{tm.dbContainerId, "TiDB"},
-		{tm.tikvContainerId, "TiKV"},
-		{tm.pdContainerId, "PD"},
+	serviceContainers := map[string]string{
+		tm.dbContainerId:     "TiDB",
+		tm.tikvContainerId:   "TiKV", 
+		tm.pdContainerId:     "PD",
 	}
 
-	for _, c := range containers {
-		if c.id != "" {
-			if err := tm.dockerCli.ContainerStop(ctx, c.id, container.StopOptions{}); err != nil {
-				log.Printf("Warning: Failed to stop %s container: %v", c.name, err)
+	for id, name := range serviceContainers {
+		if id != "" {
+			if err := tm.dockerCli.ContainerStop(ctx, id, container.StopOptions{}); err != nil {
+				log.Printf("Warning: Failed to stop %s container: %v", name, err)
 			}
-			if err := tm.dockerCli.ContainerRemove(ctx, c.id, container.RemoveOptions{Force: true}); err != nil {
-				log.Printf("Warning: Failed to remove %s container: %v", c.name, err)
+			if err := tm.dockerCli.ContainerRemove(ctx, id, container.RemoveOptions{Force: true}); err != nil {
+				log.Printf("Warning: Failed to remove %s container: %v", name, err)
 			}
 		}
 	}
