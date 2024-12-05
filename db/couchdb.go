@@ -52,7 +52,7 @@ func (cm *CouchDBManager) StartDatabase() error {
 }
 
 func (cm *CouchDBManager) StartClient() error {
-	return StartWebInterface(cm.dbPort)
+	return StartWebInterface(cm.dbPort + "/_utils")
 }
 
 func (cm *CouchDBManager) Cleanup() error {
