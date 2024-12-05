@@ -71,7 +71,7 @@ func (dm *DgraphManager) StartDatabase() error {
 
 	// Start Dgraph Alpha
 	alphaEnv := []string{}
-	alphaCmd := []string{"dgraph", "alpha", "--my=alpha:7080", "--zero=zero:5080"}
+	alphaCmd := []string{"dgraph", "alpha", "--my=alpha:7080", "--zero=zero:5080", "--security=whitelist", "--whitelist=0.0.0.0/0"}
 
 	containerId, port, err := dm.CreateContainer(ctx, "dgraph/dgraph:latest", "dbin-dgraph-alpha", "8080/tcp", alphaEnv, "/dgraph", alphaCmd)
 	if err != nil {
