@@ -146,6 +146,10 @@ func (tm *TiDBManager) StartDatabase() error {
 		return fmt.Errorf("failed to connect TiDB to network: %v", err)
 	}
 
+	// Wait for TiDB to be ready
+	log.Println("Waiting for TiDB to be ready...")
+	time.Sleep(10 * time.Second)
+
 	log.Printf("TiDB is ready and listening on port %s\n", tm.dbPort)
 	return nil
 }
@@ -161,7 +165,7 @@ func (tm *TiDBManager) StartClient() error {
 	// Create MySQL client container
 	clientConfig := &container.Config{
 		Image: "mysql:latest",
-		Cmd:   []string{"mysql", "-hdbin-tidb", "-P4000", "-uroot"},
+		Cmd:   []string{"mysql", "-hdbin-tidb", "-P4000", "-uroot", "--connect-timeout=10"},
 		Tty:   true,
 		AttachStdin:  true,
 		AttachStdout: true,
@@ -173,7 +177,13 @@ func (tm *TiDBManager) StartClient() error {
 		NetworkMode: container.NetworkMode("dbin-tidb-net"),
 	}
 
-	resp, err := tm.dockerCli.ContainerCreate(ctx, clientConfig, hostConfig, nil, nil, "dbin-tidb-client")
+	networkConfig := &network.NetworkingConfig{
+		EndpointsConfig: map[string]*network.EndpointSettings{
+			"dbin-tidb-net": {},
+		},
+	}
+
+	resp, err := tm.dockerCli.ContainerCreate(ctx, clientConfig, hostConfig, networkConfig, nil, "dbin-tidb-client")
 	if err != nil {
 		return fmt.Errorf("failed to create client container: %v", err)
 	}
