@@ -1,8 +1,8 @@
 package db
 
 import (
-	_ "embed"
 	"context"
+	_ "embed"
 	"fmt"
 	"io"
 	"log"
@@ -24,9 +24,9 @@ func init() {
 
 type TiDBManager struct {
 	*BaseManager
-	pdContainerId     string
-	tikvContainerId   string
-	networkId         string
+	pdContainerId   string
+	tikvContainerId string
+	networkId       string
 }
 
 func NewTiDBManager(dataDir string, debug bool) DatabaseManager {
@@ -149,20 +149,6 @@ func (tm *TiDBManager) StartDatabase() error {
 		return fmt.Errorf("failed to connect TiDB to network: %v", err)
 	}
 
-	// Wait for TiDB to be ready
-	log.Println("Waiting for TiDB to be ready...")
-	for i := 0; i < 30; i++ {
-		log.Printf("Checking TiDB status (attempt %d/30)...\n", i+1)
-		cmd := exec.Command("docker", "exec", tm.dbContainerId, "mysql", "-h127.0.0.1", "-P4000", "-uroot", "--connect-timeout=5", "-e", "SELECT 1")
-		if err := cmd.Run(); err == nil {
-			log.Printf("TiDB is ready and listening on port %s\n", tm.dbPort)
-			return nil
-		}
-		if i < 29 {
-			time.Sleep(2 * time.Second)
-		}
-	}
-	return fmt.Errorf("timeout waiting for TiDB to be ready")
 	return nil
 }
 
@@ -176,9 +162,9 @@ func (tm *TiDBManager) StartClient() error {
 
 	// Create MySQL client container
 	clientConfig := &container.Config{
-		Image: "mysql:latest",
-		Cmd:   []string{"mysql", "-hdbin-tidb", "-P4000", "-uroot", "--connect-timeout=10"},
-		Tty:   true,
+		Image:        "mysql:latest",
+		Cmd:          []string{"mysql", "-hdbin-tidb", "-P4000", "-uroot", "--connect-timeout=10"},
+		Tty:          true,
 		AttachStdin:  true,
 		AttachStdout: true,
 		AttachStderr: true,
@@ -198,6 +184,22 @@ func (tm *TiDBManager) StartClient() error {
 	resp, err := tm.dockerCli.ContainerCreate(ctx, clientConfig, hostConfig, networkConfig, nil, "dbin-tidb-client")
 	if err != nil {
 		return fmt.Errorf("failed to create client container: %v", err)
+	}
+
+	// Wait for TiDB to be ready
+	log.Println("Waiting for TiDB to be ready...")
+	for i := 0; i < 30; i++ {
+		log.Printf("Checking TiDB status (attempt %d/30)...\n", i+1)
+		cmd := exec.Command("docker", "exec", resp.ID, "mysql", "-h127.0.0.1", "-P4000", "-uroot", "--connect-timeout=5", "-e", "SELECT 1")
+		if err := cmd.Run(); err == nil {
+			log.Printf("TiDB is ready and listening on port %s\n", tm.dbPort)
+			return nil
+		}
+		if i < 29 {
+			time.Sleep(2 * time.Second)
+		} else {
+			return fmt.Errorf("timeout waiting for TiDB to be ready")
+		}
 	}
 
 	if err := tm.dockerCli.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
@@ -261,9 +263,9 @@ func (tm *TiDBManager) Cleanup() error {
 
 	// Clean up all service containers
 	serviceContainers := map[string]string{
-		tm.dbContainerId:     "TiDB",
-		tm.tikvContainerId:   "TiKV", 
-		tm.pdContainerId:     "PD",
+		tm.dbContainerId:   "TiDB",
+		tm.tikvContainerId: "TiKV",
+		tm.pdContainerId:   "PD",
 	}
 
 	for id, name := range serviceContainers {
