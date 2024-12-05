@@ -1,8 +1,8 @@
 package db
 
 import (
-	_ "embed"
 	"context"
+	_ "embed"
 	"fmt"
 	"log"
 	"time"
@@ -52,7 +52,7 @@ func (sm *SurrealDBManager) StartDatabase() error {
 }
 
 func (sm *SurrealDBManager) StartClient() error {
-	return sm.StartContainerClient("surreal", "sql", "-u", "root", "-p", "root")
+	return sm.StartContainerClient("/surreal", "sql", "-u", "root", "-p", "root")
 }
 
 func (sm *SurrealDBManager) Cleanup() error {
