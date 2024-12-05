@@ -3,6 +3,7 @@ package main
 import (
 	"dbin/cmd/list"
 	"dbin/db"
+	"dbin/internal/commands"
 	"log"
 	"os"
 
@@ -17,7 +18,7 @@ func main() {
 	}
 
 	cmd.AddCommand(list.NewCommand())
-	cmd.AddCommand(db.CreateCommands()...)
+	cmd.AddCommand(commands.CreateCommands(db.GetAllDatabases())...)
 
 	if err := cmd.Execute(); err != nil {
 		log.Printf("Error: %v\n", err)
