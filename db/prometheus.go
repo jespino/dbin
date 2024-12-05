@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"os/exec"
 	"time"
@@ -51,8 +52,29 @@ func (pm *PrometheusManager) StartDatabase() error {
 
 func (pm *PrometheusManager) StartClient() error {
 	url := fmt.Sprintf("http://localhost:%s", pm.dbPort)
+	log.Printf("Checking Prometheus web interface at %s", url)
+
+	// Check if server is responding
+	for i := 0; i < 5; i++ {
+		resp, err := http.Get(url)
+		if err == nil && resp.StatusCode == 200 {
+			resp.Body.Close()
+			break
+		}
+		if err != nil {
+			log.Printf("Server not ready (attempt %d/5): %v", i+1, err)
+		} else {
+			resp.Body.Close()
+			log.Printf("Server returned status %d (attempt %d/5)", resp.StatusCode, i+1)
+		}
+		if i < 4 {
+			time.Sleep(5 * time.Second)
+		} else {
+			return fmt.Errorf("server failed to respond after 5 attempts")
+		}
+	}
+
 	log.Printf("Opening Prometheus web interface at %s", url)
-	
 	cmd := exec.Command("xdg-open", url)
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("failed to open browser: %v", err)
