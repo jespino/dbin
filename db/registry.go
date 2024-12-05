@@ -1,6 +1,11 @@
 package db
 
-import "fmt"
+import (
+	"fmt"
+	"dbin/cmd/common"
+
+	"github.com/spf13/cobra"
+)
 
 type DatabaseInfo struct {
 	Name        string
@@ -27,4 +32,17 @@ func GetAllDatabases() []DatabaseInfo {
 		databases = append(databases, info)
 	}
 	return databases
+}
+
+func CreateCommands() []*cobra.Command {
+	var commands []*cobra.Command
+	for _, info := range registry {
+		cmd := common.NewDatabaseCommand(common.DBCommand{
+			Name:        info.Name,
+			Description: info.Description,
+			Manager:     info.Manager,
+		})
+		commands = append(commands, cmd)
+	}
+	return commands
 }

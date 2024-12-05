@@ -1,15 +1,8 @@
 package main
 
 import (
-	"dbin/cmd/cassandra"
-	"dbin/cmd/clickhouse"
-	"dbin/cmd/questdb"
 	"dbin/cmd/list"
-	"dbin/cmd/mariadb"
-	"dbin/cmd/mongo"
-	"dbin/cmd/neo4j"
-	"dbin/cmd/postgres"
-	"dbin/cmd/redis"
+	"dbin/db"
 	"log"
 	"os"
 
@@ -23,17 +16,8 @@ func main() {
 		Long:  `A collection of tools for managing databases in containers`,
 	}
 
-	cmd.AddCommand(
-		list.NewCommand(),
-		postgres.NewCommand(),
-		mongo.NewCommand(),
-		cassandra.NewCommand(),
-		redis.NewCommand(),
-		neo4j.NewCommand(),
-		mariadb.NewCommand(),
-		clickhouse.NewCommand(),
-		questdb.NewCommand(),
-	)
+	cmd.AddCommand(list.NewCommand())
+	cmd.AddCommand(db.CreateCommands()...)
 
 	if err := cmd.Execute(); err != nil {
 		log.Printf("Error: %v\n", err)
