@@ -30,6 +30,7 @@ dbin (Database Interactive) is a command-line tool designed to help developers e
   
 - **Search Engine**
   - [OpenSearch](https://opensearch.org/)
+  - [Elasticsearch](https://www.elastic.co/elasticsearch/)
   
 - **Wide Column**
   - [Apache HBase](https://hbase.apache.org/)
