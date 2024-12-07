@@ -54,7 +54,7 @@ func (dm *DgraphManager) StartDatabase() error {
 
 	// Start Dgraph Zero
 	zeroEnv := []string{}
-	zeroCmd := []string{"dgraph", "zero", "--my=zero:5080"}
+	zeroCmd := []string{"dgraph", "zero", "--my=dbin-dgraph-zero:5080"}
 
 	containerId, _, err := dm.CreateContainer(ctx, "dgraph/dgraph:latest", "dbin-dgraph-zero", "5080/tcp", zeroEnv, "/dgraph", zeroCmd)
 	if err != nil {
@@ -72,7 +72,7 @@ func (dm *DgraphManager) StartDatabase() error {
 
 	// Start Dgraph Alpha
 	alphaEnv := []string{}
-	alphaCmd := []string{"dgraph", "alpha", "--my=alpha:7080", "--zero=zero:5080", "--security", "whitelist=0.0.0.0/0"}
+	alphaCmd := []string{"dgraph", "alpha", "--my=dbin-dgraph-alpha:7080", "--zero=dbin-dgraph-zero:5080", "--security", "whitelist=0.0.0.0/0"}
 
 	containerId, port, err := dm.CreateContainer(ctx, "dgraph/dgraph:latest", "dbin-dgraph-alpha", "8080/tcp", alphaEnv, "/dgraph", alphaCmd)
 	if err != nil {
