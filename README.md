@@ -17,6 +17,7 @@ dbin (Database Interactive) is a command-line tool designed to help developers e
 - **Relational (SQL)**
   - PostgreSQL
   - MariaDB
+  - ClickHouse
   
 - **Document (NoSQL)**
   - MongoDB
@@ -33,10 +34,12 @@ dbin (Database Interactive) is a command-line tool designed to help developers e
   
 - **Time Series**
   - QuestDB
+  - Prometheus
   
 - **Key-Value**
   - Redis
   - ValKey
+  - Riak
   
 - **Multi-Model**
   - SurrealDB
