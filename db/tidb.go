@@ -13,6 +13,7 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/go-connections/nat"
+	"io"
 )
 
 func init() {
@@ -98,6 +99,10 @@ func (tm *TiDBManager) StartDatabase() error {
 		return fmt.Errorf("failed to start PD container: %v", err)
 	}
 
+	if tm.debug {
+		go tm.streamContainerLogs(ctx, tm.pdContainerId, "PD")
+	}
+
 	// Wait for PD to be ready
 	time.Sleep(5 * time.Second)
 
@@ -130,6 +135,10 @@ func (tm *TiDBManager) StartDatabase() error {
 
 	if err := tm.dockerCli.ContainerStart(ctx, tm.tikvContainerId, container.StartOptions{}); err != nil {
 		return fmt.Errorf("failed to start TiKV container: %v", err)
+	}
+
+	if tm.debug {
+		go tm.streamContainerLogs(ctx, tm.tikvContainerId, "TiKV")
 	}
 
 	// Wait for TiKV to be ready
@@ -166,6 +175,10 @@ func (tm *TiDBManager) StartDatabase() error {
 		return fmt.Errorf("failed to start TiDB container: %v", err)
 	}
 
+	if tm.debug {
+		go tm.streamContainerLogs(ctx, tm.dbContainerId, "TiDB")
+	}
+
 	// Get the assigned port
 	inspect, err := tm.dockerCli.ContainerInspect(ctx, tm.dbContainerId)
 	if err != nil {
@@ -175,6 +188,35 @@ func (tm *TiDBManager) StartDatabase() error {
 	tm.dbPort = inspect.NetworkSettings.Ports["4000/tcp"][0].HostPort
 
 	return nil
+}
+
+func (tm *TiDBManager) streamContainerLogs(ctx context.Context, containerId string, prefix string) {
+	reader, err := tm.dockerCli.ContainerLogs(ctx, containerId, container.LogsOptions{
+		ShowStdout: true,
+		ShowStderr: true,
+		Follow:     true,
+	})
+	if err != nil {
+		log.Printf("Warning: Failed to get %s container logs: %v", prefix, err)
+		return
+	}
+	defer reader.Close()
+
+	buf := make([]byte, 1024)
+	for {
+		n, err := reader.Read(buf)
+		if err != nil {
+			if err != io.EOF {
+				log.Printf("Warning: Error reading %s container logs: %v", prefix, err)
+			}
+			return
+		}
+		if n > 8 { // Skip Docker log header
+			fmt.Printf("[%s] %s", prefix, string(buf[8:n]))
+		} else if n > 0 {
+			fmt.Printf("[%s] %s", prefix, string(buf[:n]))
+		}
+	}
 }
 
 func (tm *TiDBManager) StartClient() error {
