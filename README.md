@@ -58,7 +58,7 @@ dbin (Database Interactive) is a command-line tool designed to help developers e
 ## Installation
 
 ```bash
-go install github.com/yourusername/dbin@latest
+go install github.com/walterjwhite/dbin@latest
 ```
 
 ## Usage
