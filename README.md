@@ -36,6 +36,7 @@ dbin (Database Interactive) is a command-line tool designed to help developers e
   
 - **Key-Value**
   - Redis
+  - ValKey
   
 - **Multi-Model**
   - SurrealDB
