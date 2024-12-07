@@ -15,18 +15,11 @@ import (
 )
 
 func init() {
-	// TODO: Fix TiDB connectivity issues:
-	// 1. Network connectivity between containers is unreliable
-	// 2. Client container cannot consistently connect to TiDB
-	// 3. Need to implement proper health checks for PD and TiKV
-	// Temporarily disabled until these issues are resolved
-	/*
 	Register(DatabaseInfo{
 		Name:        "tidb",
 		Description: "TiDB distributed database",
 		Manager:     NewTiDBManager,
 	})
-	*/
 }
 
 type TiDBManager struct {
@@ -143,7 +136,7 @@ func (tm *TiDBManager) StartDatabase() error {
 
 	// Start TiDB
 	containerId, _, err := tm.CreateContainer(ctx, "pingcap/tidb:latest", "dbin-tidb", "4000/tcp", nil, "", []string{
-		"--store=tikv",
+		"--store=dbin-tikv",
 		"--path=dbin-pd:2379",
 	})
 	if err != nil {
