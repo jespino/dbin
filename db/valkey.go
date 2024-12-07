@@ -1,8 +1,8 @@
 package db
 
 import (
-	_ "embed"
 	"context"
+	_ "embed"
 	"fmt"
 	"log"
 	"time"
@@ -41,7 +41,6 @@ func (vk *ValKeyManager) StartDatabase() error {
 	env := []string{
 		"VALKEY_USER=admin",
 		"VALKEY_PASSWORD=password",
-		"VALKEY_URI=tcp://0.0.0.0:6380",
 	}
 
 	containerId, port, err := vk.CreateContainer(ctx, "valkey/valkey:latest", "dbin-valkey", "6380/tcp", env, "/data", nil)
@@ -56,7 +55,7 @@ func (vk *ValKeyManager) StartDatabase() error {
 }
 
 func (vk *ValKeyManager) StartClient() error {
-	return vk.StartContainerClient("valkey-cli", "-u", "admin", "-p", "password")
+	return vk.StartContainerClient("valkey-cli", "-n", "0")
 }
 
 func (vk *ValKeyManager) Cleanup() error {
