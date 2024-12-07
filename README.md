@@ -15,39 +15,39 @@ dbin (Database Interactive) is a command-line tool designed to help developers e
 ## Supported Databases
 
 - **Relational (SQL)**
-  - PostgreSQL
-  - MySQL
-  - MariaDB
-  - ClickHouse
+  - [PostgreSQL](https://www.postgresql.org/)
+  - [MySQL](https://www.mysql.com/)
+  - [MariaDB](https://mariadb.org/)
+  - [ClickHouse](https://clickhouse.com/)
   
 - **Document (NoSQL)**
-  - MongoDB
-  - CouchDB
+  - [MongoDB](https://www.mongodb.com/)
+  - [CouchDB](https://couchdb.apache.org/)
   
 - **Graph**
-  - Neo4j
-  - Dgraph
+  - [Neo4j](https://neo4j.com/)
+  - [Dgraph](https://dgraph.io/)
   
 - **Search Engine**
-  - OpenSearch
+  - [OpenSearch](https://opensearch.org/)
   
 - **Wide Column**
-  - Apache HBase
-  - Cassandra
+  - [Apache HBase](https://hbase.apache.org/)
+  - [Cassandra](https://cassandra.apache.org/)
   
 - **Time Series**
-  - QuestDB
-  - Prometheus
+  - [QuestDB](https://questdb.io/)
+  - [Prometheus](https://prometheus.io/)
   
 - **Key-Value**
-  - Redis
-  - ValKey
+  - [Redis](https://redis.io/)
+  - [ValKey](https://github.com/valkey)
   
 - **Multi-Model**
-  - ArangoDB
-  - OrientDB
-  - SurrealDB
-  - RethinkDB
+  - [ArangoDB](https://www.arangodb.com/)
+  - [OrientDB](https://orientdb.org/)
+  - [SurrealDB](https://surrealdb.com/)
+  - [RethinkDB](https://rethinkdb.com/)
 
 ## Prerequisites
 
