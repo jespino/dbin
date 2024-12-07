@@ -64,6 +64,14 @@ func (tm *TiDBManager) StartDatabase() error {
 	}
 	tm.networkId = networkResponse.ID
 
+	// Create dedicated network for TiDB components
+	networkName := "dbin-tidb-net"
+	networkResponse, err := tm.dockerCli.NetworkCreate(ctx, networkName, network.NetworkingConfig{})
+	if err != nil {
+		return fmt.Errorf("failed to create network: %v", err)
+	}
+	tm.networkId = networkResponse.ID
+
 	// Start PD (Placement Driver)
 	pdConfig := &container.Config{
 		Image: "pingcap/pd:latest",
@@ -71,15 +79,23 @@ func (tm *TiDBManager) StartDatabase() error {
 			"--name=pd1",
 			"--data-dir=/data/pd",
 			"--client-urls=http://0.0.0.0:2379",
-			"--advertise-client-urls=http://dbin-pd:2379",
+			"--advertise-client-urls=http://pd1:2379",
 			"--peer-urls=http://0.0.0.0:2380",
-			"--advertise-peer-urls=http://dbin-pd:2380",
-			"--initial-cluster=pd1=http://dbin-pd:2380",
+			"--advertise-peer-urls=http://pd1:2380",
+			"--initial-cluster=pd1=http://pd1:2380",
 		},
 	}
 
 	pdHostConfig := &container.HostConfig{
 		NetworkMode: container.NetworkMode(networkName),
+	}
+
+	networkingConfig := &network.NetworkingConfig{
+		EndpointsConfig: map[string]*network.EndpointSettings{
+			networkName: {
+				Aliases: []string{"pd1"},
+			},
+		},
 	}
 
 	if tm.dataDir != "" {
@@ -88,7 +104,7 @@ func (tm *TiDBManager) StartDatabase() error {
 		}
 	}
 
-	pdResp, err := tm.dockerCli.ContainerCreate(ctx, pdConfig, pdHostConfig, nil, nil, "dbin-pd")
+	pdResp, err := tm.dockerCli.ContainerCreate(ctx, pdConfig, pdHostConfig, networkingConfig, nil, "dbin-pd")
 	if err != nil {
 		return fmt.Errorf("failed to create PD container: %v", err)
 	}
@@ -109,15 +125,23 @@ func (tm *TiDBManager) StartDatabase() error {
 	tikvConfig := &container.Config{
 		Image: "pingcap/tikv:latest",
 		Cmd: []string{
-			"--pd=dbin-pd:2379",
+			"--pd=pd1:2379",
 			"--data-dir=/data/tikv",
 			"--addr=0.0.0.0:20160",
-			"--advertise-addr=dbin-tikv:20160",
+			"--advertise-addr=tikv1:20160",
 		},
 	}
 
 	tikvHostConfig := &container.HostConfig{
 		NetworkMode: container.NetworkMode(networkName),
+	}
+
+	networkingConfig = &network.NetworkingConfig{
+		EndpointsConfig: map[string]*network.EndpointSettings{
+			networkName: {
+				Aliases: []string{"tikv1"},
+			},
+		},
 	}
 
 	if tm.dataDir != "" {
@@ -126,7 +150,7 @@ func (tm *TiDBManager) StartDatabase() error {
 		}
 	}
 
-	tikvResp, err := tm.dockerCli.ContainerCreate(ctx, tikvConfig, tikvHostConfig, nil, nil, "dbin-tikv")
+	tikvResp, err := tm.dockerCli.ContainerCreate(ctx, tikvConfig, tikvHostConfig, networkingConfig, nil, "dbin-tikv")
 	if err != nil {
 		return fmt.Errorf("failed to create TiKV container: %v", err)
 	}
@@ -148,7 +172,7 @@ func (tm *TiDBManager) StartDatabase() error {
 		Image: "pingcap/tidb:latest",
 		Cmd: []string{
 			"--store=tikv",
-			"--path=dbin-pd:2379",
+			"--path=pd1:2379",
 		},
 	}
 
