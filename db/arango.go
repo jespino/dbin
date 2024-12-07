@@ -40,6 +40,7 @@ func (am *ArangoManager) StartDatabase() error {
 
 	env := []string{
 		"ARANGO_ROOT_PASSWORD=root",
+		"ARANGO_NO_AUTH=1",
 	}
 
 	containerId, port, err := am.CreateContainer(ctx, "arangodb:latest", "dbin-arango", "8529/tcp", env, "/var/lib/arangodb3", nil)
