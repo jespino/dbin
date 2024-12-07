@@ -95,13 +95,13 @@ func (dm *DgraphManager) StartDatabase() error {
 	ratelEnv := []string{}
 	ratelCmd := []string{"/usr/local/bin/dgraph-ratel"} // Correct path to executable
 
-	containerId, port, err = dm.CreateContainer(ctx, "dgraph/ratel:latest", "dbin-dgraph-ratel", "8000/tcp", ratelEnv, "", ratelCmd)
+	_, port, err = dm.CreateContainer(ctx, "dgraph/ratel:latest", "dbin-dgraph-ratel", "8000/tcp", ratelEnv, "", ratelCmd)
 	if err != nil {
 		return err
 	}
 	dm.ratelPort = port
 
-	log.Printf("Dgraph is ready! GraphQL endpoint on port %s, Ratel UI on port %s\n", dm.alphaPort, dm.ratelPort)
+	log.Printf("Dgraph is ready! to connect to the database use http://localhost:%s, to connect to Ratel UI use http://localhost:%s\n", dm.alphaPort, dm.ratelPort)
 	return nil
 }
 
