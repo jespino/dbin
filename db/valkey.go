@@ -41,6 +41,7 @@ func (vk *ValKeyManager) StartDatabase() error {
 	env := []string{
 		"VALKEY_USER=admin",
 		"VALKEY_PASSWORD=password",
+		"VALKEY_URI=tcp://0.0.0.0:6380",
 	}
 
 	containerId, port, err := vk.CreateContainer(ctx, "valkey/valkey:latest", "dbin-valkey", "6380/tcp", env, "/data", nil)
