@@ -56,17 +56,9 @@ func (tm *TiDBManager) StartDatabase() error {
 		}
 	}
 
-	// Create dedicated network
-	networkName := "dbin-tidb-net"
-	networkResponse, err := tm.dockerCli.NetworkCreate(ctx, networkName, network.CreateOptions{})
-	if err != nil {
-		return fmt.Errorf("failed to create network: %v", err)
-	}
-	tm.networkId = networkResponse.ID
-
 	// Create dedicated network for TiDB components
 	networkName := "dbin-tidb-net"
-	networkResponse, err := tm.dockerCli.NetworkCreate(ctx, networkName, network.NetworkingConfig{})
+	networkResponse, err := tm.dockerCli.NetworkCreate(ctx, networkName, network.CreateOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to create network: %v", err)
 	}
