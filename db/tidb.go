@@ -135,19 +135,43 @@ func (tm *TiDBManager) StartDatabase() error {
 	time.Sleep(5 * time.Second)
 
 	// Start TiDB
-	containerId, _, err := tm.CreateContainer(ctx, "pingcap/tidb:latest", "dbin-tidb", "4000/tcp", nil, "", []string{
-		"--store=dbin-tikv",
-		"--path=dbin-pd:2379",
-	})
-	if err != nil {
-		return err
+	tidbConfig := &container.Config{
+		Image: "pingcap/tidb:latest",
+		Cmd: []string{
+			"--store=tikv",
+			"--path=dbin-pd:2379",
+		},
 	}
-	tm.dbContainerId = containerId
 
-	// Connect TiDB to the network
-	if err := tm.dockerCli.NetworkConnect(ctx, tm.networkId, tm.dbContainerId, nil); err != nil {
-		return fmt.Errorf("failed to connect TiDB to network: %v", err)
+	tidbHostConfig := &container.HostConfig{
+		NetworkMode: container.NetworkMode(networkName),
+		PortBindings: nat.PortMap{
+			"4000/tcp": []nat.PortBinding{
+				{
+					HostIP:   "0.0.0.0",
+					HostPort: "0", // Let Docker assign a random port
+				},
+			},
+		},
 	}
+
+	tidbResp, err := tm.dockerCli.ContainerCreate(ctx, tidbConfig, tidbHostConfig, nil, nil, "dbin-tidb")
+	if err != nil {
+		return fmt.Errorf("failed to create TiDB container: %v", err)
+	}
+	tm.dbContainerId = tidbResp.ID
+
+	if err := tm.dockerCli.ContainerStart(ctx, tm.dbContainerId, container.StartOptions{}); err != nil {
+		return fmt.Errorf("failed to start TiDB container: %v", err)
+	}
+
+	// Get the assigned port
+	inspect, err := tm.dockerCli.ContainerInspect(ctx, tm.dbContainerId)
+	if err != nil {
+		return fmt.Errorf("failed to inspect container: %v", err)
+	}
+
+	tm.dbPort = inspect.NetworkSettings.Ports["4000/tcp"][0].HostPort
 
 	return nil
 }
