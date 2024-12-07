@@ -54,6 +54,9 @@ func (om *OrientDBManager) StartDatabase() error {
 }
 
 func (om *OrientDBManager) StartClient() error {
+	log.Println("\nOrientDB Web Interface Credentials:")
+	log.Println("Username: root")
+	log.Println("Password: root\n")
 	return StartWebInterface(om.dbPort)
 }
 
