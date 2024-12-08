@@ -40,6 +40,7 @@ dbin (Database Interactive) is a command-line tool designed to help developers e
   - [QuestDB](https://questdb.io/)
   - [Prometheus](https://prometheus.io/)
   - [TimescaleDB](https://www.timescale.com/)
+  - [InfluxDB](https://www.influxdata.com/)
 
 - **Spatial**
   - [PostGIS](https://postgis.net/)
