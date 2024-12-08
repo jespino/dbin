@@ -4,7 +4,6 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
-	"log"
 	"time"
 	"database/sql"
 	_ "github.com/lib/pq"
