@@ -35,7 +35,7 @@ func NewPgVectorManager(dataDir string, debug bool) DatabaseManager {
 func (pm *PgVectorManager) StartDatabase() error {
 	ctx := context.Background()
 
-	if err := pm.PullImageIfNeeded(ctx, "ankane/pgvector:latest"); err != nil {
+	if err := pm.PullImageIfNeeded(ctx, "pgvector/pgvector:latest"); err != nil {
 		return err
 	}
 
@@ -45,7 +45,7 @@ func (pm *PgVectorManager) StartDatabase() error {
 		"POSTGRES_DB=postgres",
 	}
 
-	containerId, port, err := pm.CreateContainer(ctx, "ankane/pgvector:latest", "dbin-pgvector", "5432/tcp", env, "/var/lib/postgresql/data", nil)
+	containerId, port, err := pm.CreateContainer(ctx, "pgvector/pgvector:latest", "dbin-pgvector", "5432/tcp", env, "/var/lib/postgresql/data", nil)
 	if err != nil {
 		return err
 	}
