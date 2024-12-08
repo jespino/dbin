@@ -41,7 +41,7 @@ func (im *InfluxDBManager) StartDatabase() error {
 	env := []string{
 		"DOCKER_INFLUXDB_INIT_MODE=setup",
 		"DOCKER_INFLUXDB_INIT_USERNAME=admin",
-		"DOCKER_INFLUXDB_INIT_PASSWORD=password123",
+		"DOCKER_INFLUXDB_INIT_PASSWORD=password",
 		"DOCKER_INFLUXDB_INIT_ORG=myorg",
 		"DOCKER_INFLUXDB_INIT_BUCKET=mybucket",
 		"DOCKER_INFLUXDB_INIT_ADMIN_TOKEN=my-super-secret-auth-token",
@@ -57,7 +57,7 @@ func (im *InfluxDBManager) StartDatabase() error {
 	log.Printf("InfluxDB is ready and listening on port %s\n", im.dbPort)
 	log.Println("\nInfluxDB Web Interface Credentials:")
 	log.Println("Username: admin")
-	log.Println("Password: password123")
+	log.Println("Password: password")
 	log.Println("Organization: myorg")
 	log.Println("Bucket: mybucket")
 	log.Println("Token: my-super-secret-auth-token\n")
