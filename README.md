@@ -47,6 +47,9 @@ dbin (Database Interactive) is a command-line tool designed to help developers e
 - **Key-Value**
   - [Redis](https://redis.io/)
   - [ValKey](https://valkey.io/)
+
+- **Vector**
+  - [pgvector](https://github.com/pgvector/pgvector)
   
 - **Multi-Model**
   - [ArangoDB](https://www.arangodb.com/)
